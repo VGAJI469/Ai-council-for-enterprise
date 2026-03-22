@@ -1,0 +1,39 @@
+pipeline:
+  ingestion:
+    sources:
+      - type: credit_risk
+        path: data/raw/credit_risk.csv
+        refresh_interval: 3600
+      - type: macroeconomic
+        path: data/raw/macroeconomic.csv
+        refresh_interval: 86400
+      - type: market_volatility
+        path: data/raw/market_volatility.csv
+        refresh_interval: 900
+      - type: regulatory
+        path: data/raw/regulatory_signals.json
+        refresh_interval: 86400
+
+  preprocessing:
+    normalization: minmax
+    missing_strategy: median_impute
+    feature_engineering: true
+
+  decision:
+    outcomes:
+      - APPROVE
+      - REJECT
+      - CONDITIONAL_APPROVE
+    confidence_threshold: 0.65
+    min_agents_for_quorum: 3
+
+  evaluation:
+    metrics:
+      - accuracy
+      - f1_score
+      - calibration_error
+      - credibility_weighted_accuracy
+
+logging:
+  level: INFO
+  path: logs/pipeline.log

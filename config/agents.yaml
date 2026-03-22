@@ -1,0 +1,63 @@
+agents:
+  ceo:
+    name: "CEO Agent"
+    focus: strategic_growth
+    risk_threshold: 0.55
+    weights:
+      growth_potential: 0.40
+      market_position: 0.30
+      financial_stability: 0.20
+      risk_exposure: 0.10
+    initial_credibility: 1.0
+
+  cfo:
+    name: "CFO Agent"
+    focus: financial_stability
+    risk_threshold: 0.35
+    weights:
+      liquidity_risk: 0.35
+      capital_preservation: 0.30
+      default_probability: 0.25
+      cash_flow: 0.10
+    initial_credibility: 1.0
+
+  marketing:
+    name: "Marketing Agent"
+    focus: market_expansion
+    risk_threshold: 0.60
+    weights:
+      market_opportunity: 0.40
+      customer_growth: 0.35
+      brand_reach: 0.15
+      competitive_edge: 0.10
+    initial_credibility: 1.0
+
+  pr:
+    name: "PR Agent"
+    focus: reputation_risk
+    risk_threshold: 0.45
+    weights:
+      public_sentiment: 0.35
+      brand_stability: 0.30
+      media_exposure: 0.25
+      stakeholder_trust: 0.10
+    initial_credibility: 1.0
+
+  legal:
+    name: "Legal Agent"
+    focus: regulatory_compliance
+    risk_threshold: 0.30
+    weights:
+      regulatory_risk: 0.40
+      policy_exposure: 0.30
+      legal_liability: 0.20
+      compliance_score: 0.10
+    initial_credibility: 1.0
+
+credibility:
+  alpha: 0.7
+  beta: 0.15
+  gamma: 0.10
+  delta: 0.05
+  evolution_threshold: 3
+  min_credibility: 0.1

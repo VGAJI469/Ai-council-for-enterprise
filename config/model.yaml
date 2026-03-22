@@ -1,0 +1,47 @@
+model:
+  base:
+    type: gradient_boosting
+    library: xgboost
+    hyperparameters:
+      n_estimators: 200
+      max_depth: 6
+      learning_rate: 0.05
+      subsample: 0.8
+      colsample_bytree: 0.8
+
+  training:
+    test_split: 0.2
+    cv_folds: 5
+    early_stopping_rounds: 20
+    random_state: 42
+
+# Local LLM configuration (Ollama)
+llm:
+  provider: ollama
+  base_url: http://localhost:11434
+  timeout_seconds: 60
+  max_tokens: 300
+  temperature: 0.35
+
+  # Available locally hosted models
+  models:
+    - name: llama3
+      tag: llama3
+      use_for: [ceo, pr]
+    - name: deepseek-r1
+      tag: deepseek-r1
+      use_for: [cfo, legal]
+    - name: mistral
+      tag: mistral
+      use_for: [marketing]
+    - name: phi
+      tag: phi3
+      use_for: [fallback]
+
+  # Role → model assignment
+  role_model_map:
+    strategic_growth:     llama3
+    financial_stability:  deepseek-r1
+    market_expansion:     mistral
+    reputation_risk:      llama3
+    regulatory_compliance: deepseek-r1

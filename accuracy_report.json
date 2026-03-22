@@ -1,0 +1,62 @@
+{
+  "timestamp": "2026-03-17T05:01:11.614465Z",
+  "quick_mode": true,
+  "agent_filter": "ceo",
+  "consistency": {
+    "strategic_growth": {
+      "title": "CEO",
+      "consistency": 100.0,
+      "conf_variance": 0.0,
+      "risk_stable": true,
+      "stable": true
+    }
+  },
+  "differentiation": {
+    "unique_positions": [
+      "CONDITIONAL_APPROVE"
+    ],
+    "diversity_score": 1.0,
+    "passed": true,
+    "breakdown": {
+      "strategic_growth": "CONDITIONAL_APPROVE"
+    }
+  },
+  "json_reliability": {
+    "strategic_growth": {
+      "title": "CEO",
+      "reliability": 0.0,
+      "reliable": false
+    }
+  },
+  "calibration": {
+    "strategic_growth": {
+      "title": "CEO",
+      "calibration": 100.0,
+      "detail": {
+        "risky": {
+          "decision": "REJECT",
+          "confidence": 0.846,
+          "passed": true
+        },
+        "safe": {
+          "decision": "APPROVE",
+          "confidence": 0.844,
+          "passed": true
+        },
+        "ambiguous": {
+          "decision": "CONDITIONAL_APPROVE",
+          "confidence": 0.6312,
+          "passed": true
+        }
+      }
+    }
+  },
+  "response_time": {
+    "strategic_growth": {
+      "title": "CEO",
+      "model": "llama3",
+      "avg_time": 62.75,
+      "passed": false
+    }
+  }
+}
