@@ -9,4 +9,4 @@ if not Path(".env").exists():
     Path(".env").write_text(Path(".env.example").read_text())
     print("  Created .env")
 
-print("\nSetup complete. Add ANTHROPIC_API_KEY to .env")
+print("\nSetup complete. Make sure Ollama is running: ollama serve")

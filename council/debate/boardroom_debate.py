@@ -280,28 +280,28 @@ if __name__ == '__main__':
     import os
     sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-    motion = 'The company has a debt to equity ratio of 3.2, negative free cash flow of minus 8 million dollars for the past two consecutive quarters, and its credit rating has just been downgraded from BBB to BB by Moody -- should the board immediately halt all expansion plans, freeze hiring, and begin emergency debt restructuring or continue operations as normal and risk further credit downgrade?'
+    motion = 'The board is considering a $240 million all-cash acquisition of NeuralEdge AI, a fast-growing artificial intelligence startup with 18 patents in generative AI and a $52 million annual recurring revenue growing at 110% year-over-year, but the target has a monthly burn rate of $6.8 million, faces pending regulatory scrutiny from the EU AI Act, has lost two key engineers to competitors in the last quarter, and our own company currently holds only $310 million in liquid reserves -- should the board approve this acquisition at the proposed valuation or walk away and risk losing first-mover advantage in enterprise AI?'
 
-    # Context reflects the actual debt-crisis scenario in the motion above
+    # Context reflects the high-stakes AI acquisition scenario
     context = {
-        'debt_to_income_ratio':       0.78,   # high — mirrors D/E 3.2
-        'liquidity_ratio_inv':        0.72,   # high — negative FCF = low liquidity
-        'default_probability':        0.62,   # elevated — post-downgrade
-        'cash_flow_risk':             0.80,   # very high — 2 consecutive negative FCF quarters
-        'competitive_risk':           0.65,   # high — downgrade hurts market credibility
-        'market_growth_rate':         0.04,   # sluggish
-        'regulatory_violation_prob':  0.20,
-        'policy_risk':                0.35,
-        'legal_risk':                 0.28,
-        'compliance_score':           0.60,
-        'sentiment_risk':             0.55,   # high — credit downgrade triggers PR hit
-        'brand_risk':                 0.45,
-        'media_risk':                 0.50,
-        'stakeholder_risk':           0.60,
-        'customer_churn_risk':        0.38,
-        'market_opportunity':         0.30,   # low — distressed position
-        'investment_amount':          0,
-        'payback_period_years':       0,
+        'debt_to_income_ratio':       0.38,   # moderate — company is stable but not flush
+        'liquidity_ratio_inv':        0.55,   # concerning — $240M would consume 77% of reserves
+        'default_probability':        0.22,   # low-moderate — healthy acquirer
+        'cash_flow_risk':             0.48,   # moderate — large cash outlay tightens runway
+        'competitive_risk':           0.72,   # high — rivals are also eyeing AI acquisitions
+        'market_growth_rate':         0.35,   # strong — AI sector booming
+        'regulatory_violation_prob':  0.45,   # elevated — EU AI Act uncertainty
+        'policy_risk':                0.52,   # high — evolving AI regulation globally
+        'legal_risk':                 0.40,   # moderate — IP due diligence risks
+        'compliance_score':           0.55,   # below average — target has compliance gaps
+        'sentiment_risk':             0.35,   # moderate — public wary of big AI deals
+        'brand_risk':                 0.30,   # moderate — acquisition could boost or hurt brand
+        'media_risk':                 0.58,   # high — AI acquisitions attract media scrutiny
+        'stakeholder_risk':           0.50,   # moderate — shareholders may question valuation
+        'customer_churn_risk':        0.20,   # low — AI capabilities could improve retention
+        'market_opportunity':         0.82,   # very high — first-mover advantage in enterprise AI
+        'investment_amount':          240000000,
+        'payback_period_years':       5,
     }
 
     run_debate(motion, context)

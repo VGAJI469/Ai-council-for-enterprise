@@ -1,0 +1,42 @@
+[
+  {
+    "date": "2024-01-15",
+    "signal_type": "regulatory_change",
+    "severity": "medium",
+    "description": "Updated capital adequacy requirements under Basel III.1",
+    "sector": "banking",
+    "impact_score": 0.45
+  },
+  {
+    "date": "2024-02-20",
+    "signal_type": "compliance_alert",
+    "severity": "low",
+    "description": "New ESG disclosure requirements effective Q3 2024",
+    "sector": "all",
+    "impact_score": 0.25
+  },
+  {
+    "date": "2024-03-10",
+    "signal_type": "enforcement_action",
+    "severity": "high",
+    "description": "Major fine issued for anti-money laundering violations",
+    "sector": "finance",
+    "impact_score": 0.72
+  },
+  {
+    "date": "2024-04-05",
+    "signal_type": "policy_update",
+    "severity": "medium",
+    "description": "Interest rate ceiling adjustments for consumer lending",
+    "sector": "lending",
+    "impact_score": 0.38
+  },
+  {
+    "date": "2024-05-12",
+    "signal_type": "regulatory_change",
+    "severity": "low",
+    "description": "Simplified reporting framework for SME lending",
+    "sector": "banking",
+    "impact_score": 0.18
+  }
+]

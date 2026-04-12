@@ -53,6 +53,8 @@ except ImportError:
 
 logging.basicConfig(level=logging.WARNING)
 
+import pytest
+
 from agents.evolution.agent_factory import AgentFactory
 from agents.base.llm_client import LocalLLMClient, ROLE_MODEL_MAP
 
@@ -98,6 +100,12 @@ def load_agents(filter_role: str = None):
     if filter_role:
         return [a for a in all_agents if a.role == filter_role]
     return all_agents
+
+
+@pytest.fixture
+def agents():
+    """Pytest fixture that provides all council agents."""
+    return load_agents()
 
 
 # ── Test data ─────────────────────────────────────────────────────────────────
