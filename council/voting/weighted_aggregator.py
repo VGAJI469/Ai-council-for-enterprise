@@ -115,8 +115,8 @@ class WeightedAggregator:
         assert 0.0 <= aggregate_risk  <= 1.0, f"risk out of bounds: {aggregate_risk}"
         assert 0.0 <= council_conf    <= 1.0, f"confidence out of bounds: {council_conf}"
 
-        print(f"[Council] verdict={final_decision}")
-        print(f"[Council] risk={aggregate_risk}  confidence={council_conf}")
+        logger.info(f"[Council] verdict={final_decision}")
+        logger.info(f"[Council] risk={aggregate_risk}  confidence={council_conf}")
 
         vote_breakdown = {
             p.agent_role: {

@@ -1,4 +1,8 @@
 """FastAPI application entry point."""
+import logging
+# Suppress all logging output
+logging.disable(logging.CRITICAL)
+
 from fastapi import FastAPI
 from api.routes.council_routes import router
 

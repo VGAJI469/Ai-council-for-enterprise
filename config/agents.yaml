@@ -61,3 +61,19 @@ credibility:
   delta: 0.05
   evolution_threshold: 3
   min_credibility: 0.1
+
+ceo_supervision:
+  supervision_threshold: 3
+  performance_floor: 0.35
+  max_generations: 5
+  mutation_params:
+    risk_threshold_min: 0.30
+    risk_threshold_max: 0.75
+    leniency_correction: 0.05
+    conservatism_correction: 0.05
+    strategic_weight_drift: 0.08
+    quantitative_weight_drift: 0.08
+  override_detection:
+    risk_mismatch_threshold: 0.55
+    consecutive_failure_limit: 3
+

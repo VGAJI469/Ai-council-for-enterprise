@@ -10,9 +10,14 @@ from council.voting.weighted_aggregator import WeightedAggregator
 
 router = APIRouter(prefix="/council", tags=["council"])
 
-# ── Shared factory (single Ollama connection for all requests) ────────────────
-_factory = None
-_agents  = None
+# ── Shared singletons (single Ollama connection for all requests) ─────────────
+_factory               = None
+_agents                = None
+_oversight_board       = None
+_supervision_controller = None
+_performance_tracker   = None
+_ceo_mutator           = None
+
 
 def _get_agents():
     global _factory, _agents
@@ -22,6 +27,47 @@ def _get_agents():
         _factory = AgentFactory()
         _agents  = _factory.build_council(cfg)
     return _agents
+
+
+def _get_oversight_components():
+    """
+    Lazy-initialise the CEO oversight board, performance tracker, mutator,
+    and supervision controller.  All four are singletons — shared across
+    every request so state accumulates across debate sessions.
+
+    Returns (oversight_board, supervision_controller).
+    """
+    global _oversight_board, _supervision_controller, _performance_tracker, _ceo_mutator
+
+    if _oversight_board is None:
+        from council.oversight.ceo_oversight    import CEOOversightBoard
+        from council.oversight.ceo_performance  import CEOPerformanceTracker
+        from evolution.mutation.ceo_mutator     import CEOMutator
+        from evolution.selection.ceo_supervision_controller import CEOSupervisionController
+
+        agents = _get_agents()
+        ceo_agent = next(
+            (a for a in agents if a.role == "strategic_growth"), agents[0]
+        )
+
+        with open("config/agents.yaml") as f:
+            cfg = yaml.safe_load(f)
+        sup_cfg = cfg.get("ceo_supervision", {})
+
+        _oversight_board     = CEOOversightBoard()
+        _performance_tracker = CEOPerformanceTracker()
+        _ceo_mutator         = CEOMutator()
+        _supervision_controller = CEOSupervisionController(
+            ceo_agent             = ceo_agent,
+            oversight_board       = _oversight_board,
+            performance_tracker   = _performance_tracker,
+            ceo_mutator           = _ceo_mutator,
+            agent_factory         = _factory,
+            supervision_threshold = sup_cfg.get("supervision_threshold", 3),
+            performance_floor     = sup_cfg.get("performance_floor", 0.35),
+        )
+
+    return _oversight_board, _supervision_controller
 
 
 # ── Request/Response models ───────────────────────────────────────────────────
@@ -152,3 +198,76 @@ async def list_models():
 async def evolution_log():
     """Agent evolution history and replacement events."""
     return {"message": "Connect to EvolutionController.get_evolution_log()"}
+
+
+# ── GET /council/ceo/supervision ─────────────────────────────────────────────
+
+@router.get("/ceo/supervision")
+async def ceo_supervision():
+    """
+    Return the CEO oversight dashboard: generation, supervision score,
+    override statistics, performance score, and mutation log.
+
+    All values accumulate across debate sessions as long as the server is
+    running.  Use POST /council/ceo/reset-supervision to clear state for
+    a fresh demo run.
+    """
+    try:
+        board, controller = _get_oversight_components()
+        summary  = board.get_pattern_summary()
+        status   = controller.get_status()
+        mut_log  = _ceo_mutator.get_mutation_log() if _ceo_mutator else []
+        last_mut_reason = mut_log[-1]["mutation_reason"] if mut_log else None
+
+        return {
+            "ceo_generation":       status["ceo_generation"],
+            "supervision_score":    status["supervision_score"],
+            "override_streak":      status["override_streak"],
+            "performance_score":    status["performance_score"],
+            "total_decisions":      summary["total_decisions"],
+            "total_overrides":      summary["total_overrides"],
+            "override_rate":        summary["override_rate"],
+            "dominant_pattern":     summary["dominant_pattern"],
+            "last_mutation_reason": last_mut_reason,
+            "mutation_log":         mut_log,
+        }
+    except Exception as e:
+        raise HTTPException(500, f"CEO supervision query failed: {e}")
+
+
+# ── POST /council/ceo/reset-supervision ──────────────────────────────────────
+
+@router.post("/ceo/reset-supervision")
+async def reset_ceo_supervision():
+    """
+    Clear CEO oversight board history and reset the performance tracker.
+    Useful for demo resets between independent debate runs.
+
+    Does NOT restart the CEO agent or change its generation — it only
+    wipes the accumulated override and performance history so the next
+    session starts with a clean slate.
+    """
+    global _oversight_board, _performance_tracker, _supervision_controller, _ceo_mutator
+
+    try:
+        if _oversight_board is not None:
+            from council.oversight.ceo_oversight   import CEOOversightBoard
+            from council.oversight.ceo_performance import CEOPerformanceTracker
+            from evolution.mutation.ceo_mutator    import CEOMutator
+
+            _oversight_board     = CEOOversightBoard()
+            _performance_tracker = CEOPerformanceTracker()
+            _ceo_mutator         = CEOMutator()
+
+            # Update supervision controller references without replacing the agent
+            if _supervision_controller is not None:
+                _supervision_controller.oversight_board     = _oversight_board
+                _supervision_controller.performance_tracker = _performance_tracker
+
+        return {
+            "status":  "reset_complete",
+            "message": "CEO oversight board and performance tracker cleared.",
+        }
+    except Exception as e:
+        raise HTTPException(500, f"CEO supervision reset failed: {e}")
+

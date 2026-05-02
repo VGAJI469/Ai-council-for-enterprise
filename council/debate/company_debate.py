@@ -8,6 +8,10 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
+import logging
+# Suppress all logging output
+logging.disable(logging.CRITICAL)
+
 import yaml
 import joblib
 import numpy as np

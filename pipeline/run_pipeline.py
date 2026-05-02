@@ -13,6 +13,10 @@ Loop:
 """
 
 import logging
+# Suppress all logging output
+logging.disable(logging.CRITICAL)
+logger = logging.getLogger(__name__)
+
 import yaml
 import uuid
 import json
@@ -23,16 +27,10 @@ from pipeline.ingestion.data_ingester import DataIngester
 from pipeline.aggregation.feature_builder import FeatureBuilder
 from council.debate.council_session import CouncilSession
 from council.voting.weighted_aggregator import WeightedAggregator
-from council.credibility.credibility_manager import CredibilityManager
+from council.credibility.credibility_manager import CredibilityManager, CredibilityTuner
 from evolution.mutation.agent_mutator import AgentMutator
 from evolution.selection.evolution_controller import EvolutionController
 from agents.evolution.agent_factory import AgentFactory
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 
 def load_yaml(path: str) -> dict:
@@ -69,11 +67,19 @@ def main(max_records: int = 5):
     factory    = AgentFactory(ollama_url=ollama_url)
 
     cred_cfg = agent_cfg["credibility"]
+    # Item 3: CredibilityTuner wired in — self-adjusts α/β/γ/δ every 10 cycles
+    tuner = CredibilityTuner(
+        alpha=cred_cfg["alpha"],
+        beta=cred_cfg["beta"],
+        gamma=cred_cfg["gamma"],
+        delta=cred_cfg["delta"],
+    )
     credibility_manager = CredibilityManager(
         alpha=cred_cfg["alpha"],
         beta=cred_cfg["beta"],
         gamma=cred_cfg["gamma"],
         delta=cred_cfg["delta"],
+        tuner=tuner,
     )
     mutator   = AgentMutator()
     evolution = EvolutionController(
@@ -103,9 +109,19 @@ def main(max_records: int = 5):
         result = aggregator.aggregate(predictions)
         print_result(i + 1, result)
 
+        consensus_risk = result["aggregate_risk_score"]
+
+        # Item 4: give each agent the consensus risk so blend ratio updater has a signal
+        for agent in agents:
+            agent.last_consensus_risk = consensus_risk
+
         credibility_manager.update_all(
-            agents, predictions, result["final_decision"]
+            agents, predictions, result["final_decision"],
+            consensus_risk=consensus_risk,   # Item 3: feeds CredibilityTuner
         )
+
+        # Item 8: record predictions for FitnessScorer diversity computation
+        evolution.record_cycle_predictions(predictions)
 
         agents = evolution.evaluate_council(
             agents, credibility_manager, mutator, factory,

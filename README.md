@@ -74,6 +74,14 @@ This system demonstrates all four enterprise AI use cases:
     performance_tracker.py monitors agent accuracy across sessions,
     detects drift, and triggers automatic replacement before
     council reliability degrades
+
+✅  CEO Governance & Oversight Layer (NEW)
+    CEOOversightBoard detects override patterns (LENIENT /
+    AGGRESSIVE / LENIENT_RISK_MISMATCH) across debate sessions.
+    CEOMutator applies directional threshold corrections — no
+    random replacement, targeted recalibration of the CEO config.
+    CEOSupervisionController wires board + tracker + mutator
+    into an automated governance loop with a generation cap of 5.
 ```
 
 ---
@@ -364,60 +372,142 @@ curl http://localhost:8000/council/bench
 
 ---
 
+## 🛡️ CEO Oversight & Governance System *(New)*
+
+The council adds a dedicated accountability layer specifically for the CEO — the one agent whose strategic bias can override financial or legal signals.
+
+### How Override Detection Works
+
+```
+Every debate session, CEOOversightBoard classifies the CEO's decision:
+
+  LENIENT              → council said REJECT,  CEO said APPROVE
+  AGGRESSIVE           → council said APPROVE,  CEO said REJECT
+  LENIENT_RISK_MISMATCH→ CEO approved despite aggregate_risk > 0.55
+  None                 → no material divergence — aligned decision
+```
+
+### Supervision Score
+
+```
+score = 1.0 − (override_rate × 0.5) − (consecutive_streak × 0.1)
+clamped to [0.0, 1.0]
+
+1.0  → fully aligned, no overrides
+0.0  → chronic override behaviour across all recent sessions
+```
+
+### Directional Mutation (not random replacement)
+
+When the override streak hits the threshold (default: 3), `CEOSupervisionController` triggers `CEOMutator`:
+
+```
+Lenient bias (≥ 3 LENIENT in last 10):
+  risk_threshold  −= 0.05   (make CEO stricter)
+  strategic weights −= 0.08 → quantitative weights += 0.08
+
+Aggressive bias (≥ 3 AGGRESSIVE in last 10):
+  risk_threshold  += 0.05   (loosen threshold)
+  strategic weights += 0.06 → quantitative weights −= 0.06
+
+No dominant pattern:
+  risk_threshold += uniform(−0.03, +0.03)   (scheduled recalibration)
+```
+
+### Generation Cap
+
+After **5 mutation generations** the CEO config resets to the `agents.yaml` baseline instead of compounding drift. This prevents the threshold from ever escaping its operational range.
+
+### API
+
+```bash
+# CEO oversight dashboard (generation, score, override stats, mutation log)
+curl http://localhost:8000/council/ceo/supervision
+
+# Reset CEO state for a fresh demo (does NOT restart the agent)
+curl -X POST http://localhost:8000/council/ceo/reset-supervision
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
-ai-council/
+adaptive-ai-council/
 │
-├── 📄 main.py                          FastAPI entry point — all API routes
-├── 📄 ingest.py                        One-time knowledge base builder
-├── 📄 config.py                        Pydantic settings from .env
 ├── 📄 requirements.txt
+├── 📄 accuracy_report.json             Latest per-agent accuracy snapshot
+├── 📄 test_quick_run.py                Smoke test — single council cycle
+│
+├── 📂 api/
+│   ├── main.py                         FastAPI entry point
+│   ├── 📂 routes/
+│   │   └── council_routes.py           All /council/* endpoints
+│   ├── 📂 schemas/                     Pydantic request/response models
+│   └── 📂 middleware/
+│
+├── 📂 agents/
+│   ├── 📂 base/
+│   │   ├── base_agent.py               Abstract agent + predict() contract
+│   │   └── llm_client.py               httpx → Ollama /api/generate
+│   ├── 📂 roles/
+│   │   ├── ceo_agent.py                DeepSeek R1 — strategic growth
+│   │   ├── cfo_agent.py                Mixtral — financial risk
+│   │   ├── legal_agent.py              LLaMA 3 — compliance
+│   │   ├── marketing_agent.py          LLaMA 3 — market opportunity
+│   │   └── pr_agent.py                 Phi-3 — reputation risk
+│   └── 📂 evolution/
+│       └── agent_factory.py            Builds council from agents.yaml
 │
 ├── 📂 council/
-│   ├── 📄 models.py                    All Pydantic schemas
-│   │
-│   ├── 📂 agents/
-│   │   ├── registry.py                 5 agent definitions + credibility scores
-│   │   ├── credibility.py              Update, clamp, normalise logic
-│   │   ├── performance_tracker.py      Outcome history — accuracy, streaks
-│   │   ├── candidate_pool.py           8 bench candidate definitions
-│   │   └── vote_out_manager.py         Replacement orchestration + audit log
-│   │
-│   ├── 📂 rag/
-│   │   ├── embedder.py                 Chunk + embed → ChromaDB
-│   │   ├── retriever.py                Similarity search + context formatting
-│   │   └── knowledge_base/
-│   │       ├── cfo/                    ← add your financial documents here
-│   │       ├── legal/                  ← add RBI circulars, acts here
-│   │       ├── strategy/               ← add market research here
-│   │       ├── marketing/              ← add consumer studies here
-│   │       └── pr/                     ← add sentiment reports here
-│   │
-│   ├── 📂 llm/
-│   │   ├── client.py                   httpx → Ollama /api/generate
-│   │   └── model_map.py                Nickname → Ollama model string
-│   │
-│   ├── 📂 prompts/
-│   │   ├── analysis.py                 Isolated Round 1 prompt builder
-│   │   ├── debate.py                   Challenge/counter prompt builder
-│   │   ├── synthesis.py                Final decision prompt builder
-│   │   └── fresh_eyes.py               Clean validator prompt builder
-│   │
-│   ├── 📂 engine/
-│   │   ├── engine.py                   Main orchestrator — all 8 layers
-│   │   ├── debate_loop.py              3-round loop + sycophancy guard
-│   │   ├── voting.py                   Weighted vote + outcome computation
-│   │   └── fresh_eyes.py               Post-consensus validator
-│   │
-│   └── 📂 storage/
-│       └── session_store.py            In-memory session persistence
+│   ├── 📂 credibility/
+│   │   └── credibility_manager.py      Update, clamp, normalise credibility
+│   ├── 📂 debate/
+│   │   ├── boardroom_debate.py         3-round debate loop + sycophancy guard
+│   │   ├── company_debate.py           Financial-record-level debate runner
+│   │   └── council_session.py          Session orchestrator — all 8 layers
+│   ├── 📂 voting/
+│   │   └── weighted_aggregator.py      Credibility-weighted vote + outcome
+│   └── 📂 oversight/                   ★ NEW — CEO Governance Layer
+│       ├── ceo_oversight.py            CEOOversightBoard + CEODecisionRecord
+│       └── ceo_performance.py          CEOPerformanceTracker — accuracy streaks
+│
+├── 📂 evolution/
+│   ├── 📂 mutation/
+│   │   ├── agent_mutator.py            General directional mutator (4 agents)
+│   │   └── ceo_mutator.py              ★ NEW — CEO-specific threshold mutator
+│   ├── 📂 selection/
+│   │   ├── evolution_controller.py     General evolution orchestrator
+│   │   └── ceo_supervision_controller.py  ★ NEW — CEO governance loop
+│   └── 📂 registry/
+│
+├── 📂 pipeline/
+│   ├── run_pipeline.py                 End-to-end financial pipeline runner
+│   ├── 📂 ingestion/
+│   ├── 📂 preprocessing/
+│   └── 📂 aggregation/
+│       └── feature_builder.py
+│
+├── 📂 models/
+│   ├── base_model.pkl                  Trained ML base model
+│   └── 📂 inference/
+│       └── model_wrapper.py
+│
+├── 📂 config/
+│   ├── agents.yaml                     Agent definitions + ceo_supervision block
+│   └── model.yaml                      LLM model assignments
+│
+├── 📂 data/
+│   ├── 📂 raw/
+│   └── 📂 processed/
+│
+├── 📂 scripts/
+│   ├── generate_company_financial_data.py
+│   ├── generate_synthetic_data.py
+│   └── check_ollama.py
 │
 └── 📂 tests/
-    ├── test_accuracy.py                Full accuracy + consistency suite
-    ├── test_retriever.py               RAG retrieval unit tests
-    ├── test_voting.py                  Voting logic unit tests
-    └── test_engine.py                  End-to-end engine tests
+    └── (unit + integration tests)
 ```
 
 ---
@@ -556,12 +646,11 @@ curl -X POST http://localhost:8000/council/run \
 |--------|----------|-------------|
 | `POST` | `/council/run` | Run a full council session |
 | `POST` | `/council/feedback` | Submit outcome to update credibility scores |
-| `GET` | `/council/agents` | List active agents with current credibility |
-| `GET` | `/council/performance` | Per-agent accuracy and replacement eligibility |
-| `GET` | `/council/bench` | All voted-out agents with replacement history |
-| `GET` | `/council/candidates` | Available replacement candidates |
-| `GET` | `/council/vote-out-history` | Full audit trail of all replacements |
-| `POST` | `/council/reinstate/{id}` | Reinstate a benched agent (human override) |
+| `GET` | `/council/agents/status` | Live credibility scores + model assignments |
+| `GET` | `/council/llm/models` | List available Ollama models |
+| `GET` | `/council/evolution/log` | Agent evolution history and replacement events |
+| `GET` | `/council/ceo/supervision` | ★ CEO oversight dashboard — generation, score, override stats, mutation log |
+| `POST` | `/council/ceo/reset-supervision` | ★ Clear CEO oversight state for a fresh demo run |
 | `GET` | `/health` | Health check |
 
 ---
@@ -646,6 +735,11 @@ EMBED_MODEL=nomic-embed-text         # Local embedding model
 
 ## 🗺️ Roadmap
 
+- [x] CEO Oversight Board — override detection across sessions
+- [x] CEO Performance Tracker — accuracy streaks and floor enforcement
+- [x] CEO Directional Mutator — targeted threshold correction (not random replacement)
+- [x] CEO Supervision Controller — automated governance loop with generation cap
+- [x] Management API — `/council/ceo/supervision` + `/council/ceo/reset-supervision`
 - [ ] Persistent session storage with SQLite
 - [ ] Streaming API — token-level streaming per agent
 - [ ] React web dashboard for live council sessions

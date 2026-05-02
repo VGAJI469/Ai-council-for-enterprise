@@ -19,7 +19,8 @@ model:
 llm:
   provider: ollama
   base_url: http://localhost:11434
-  timeout_seconds: 60
+  timeout_seconds: 300  # Increased from 60 for large reasoning models
+  max_retries: 2
   max_tokens: 300
   temperature: 0.35
 
