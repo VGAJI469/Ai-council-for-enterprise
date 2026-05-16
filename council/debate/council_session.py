@@ -4,8 +4,10 @@ import logging
 from typing import List, Dict
 from datetime import datetime
 from agents.base.base_agent import AgentPrediction
+from utils.logger import get_logger
+from utils.audit import AuditRecorder
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Limit debate history to prevent token overflow
 MAX_DEBATE_LOG_SIZE = 500  # Max entries in debate_log
@@ -19,6 +21,12 @@ class CouncilSession:
         self.predictions: List[AgentPrediction] = []
         self.debate_log: List[Dict] = []
         self.timestamp = datetime.utcnow()
+        self.audit = AuditRecorder(self.session_id)
+        # record session start
+        try:
+            self.audit.record_event("session_start", {"agent_count": len(self.agents)})
+        except Exception:
+            logger.exception("Failed to record session start audit")
 
     def run(self, financial_data: dict) -> List[AgentPrediction]:
         logger.info(f"Council session {self.session_id} — {len(self.agents)} agents")
@@ -36,6 +44,11 @@ class CouncilSession:
                     "reasoning": prediction.reasoning[:200] if prediction.reasoning else "",  # Truncate reasoning
                 }
                 self.debate_log.append(log_entry)
+                # record agent decision to audit
+                try:
+                    self.audit.record_event("agent_decision", {"agent": agent.role, "decision": prediction.decision, "risk_score": prediction.risk_score, "confidence": prediction.confidence})
+                except Exception:
+                    logger.exception("Failed to record agent decision to audit")
                 
                 # Enforce size limit on debate log
                 if len(self.debate_log) > MAX_DEBATE_LOG_SIZE:
@@ -44,11 +57,15 @@ class CouncilSession:
                 
                 logger.info(f"  [{agent.role}] {prediction.decision} | risk={prediction.risk_score:.4f} | cred={prediction.credibility:.3f}")
             except Exception as e:
-                logger.error(f"Agent {agent.role} failed during predict: {e}")
+                logger.exception(f"Agent {agent.role} failed during predict: {e}")
                 # Create fallback prediction instead of crashing
                 fallback_pred = self._create_fallback_prediction(agent)
                 self.predictions.append(fallback_pred)
                 logger.warning(f"  [{agent.role}] FALLBACK | Empty response fallback triggered")
+                try:
+                    self.audit.record_error(e, {"agent": agent.role})
+                except Exception:
+                    logger.exception("Failed to record error to audit")
         
         return self.predictions
 
