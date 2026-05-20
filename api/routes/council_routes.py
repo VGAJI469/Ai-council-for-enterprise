@@ -7,6 +7,8 @@ from typing import Optional, Dict, Any
 
 from agents.evolution.agent_factory import AgentFactory
 from council.voting.weighted_aggregator import WeightedAggregator
+from utils.logger import get_logger
+from utils.audit import AuditRecorder
 
 router = APIRouter(prefix="/council", tags=["council"])
 
@@ -104,7 +106,11 @@ async def run_council(req: CaseRequest):
     Returns the final verdict, aggregate risk score, council confidence,
     and per-agent vote breakdown.
     """
+    logger = get_logger("api.routes.council")
     try:
+        session_id = str(uuid.uuid4())
+        audit = AuditRecorder(session_id)
+
         agents = _get_agents()
         agg    = WeightedAggregator()
 
@@ -134,14 +140,19 @@ async def run_council(req: CaseRequest):
         }
 
         predictions = []
+        audit.record_event("session_request", {"case": req.case})
         for agent in agents:
             pred = agent.predict(context.copy())
             predictions.append(pred)
+            try:
+                audit.record_event("agent_prediction", {"agent": pred.agent_role, "decision": pred.decision, "risk_score": pred.risk_score, "confidence": pred.confidence})
+            except Exception:
+                logger.exception("Failed to record agent prediction to audit")
 
         result = agg.aggregate(predictions)
 
-        return {
-            "session_id":            str(uuid.uuid4()),
+        payload = {
+            "session_id":            session_id,
             "case":                  req.case,
             "verdict":               result["final_decision"],
             "aggregate_risk_score":  result["aggregate_risk_score"],
@@ -149,8 +160,18 @@ async def run_council(req: CaseRequest):
             "vote_breakdown":        result["vote_breakdown"],
             "quorum_size":           result["quorum_size"],
         }
+        try:
+            audit.record_event("session_end", payload)
+            report_path = audit.write_report()
+            logger.info("Generated audit report", extra={"extra": {"session_id": session_id, "report_path": report_path}})
+        except Exception:
+            logger.exception("Failed to write audit report")
+
+        return payload
 
     except Exception as e:
+        logger = get_logger("api.routes.council")
+        logger.exception("Council evaluation failed")
         raise HTTPException(500, f"Council evaluation failed: {e}")
 
 

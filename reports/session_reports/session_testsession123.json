@@ -1,0 +1,34 @@
+{
+  "session_id": "testsession123",
+  "started_at": "2026-05-16T12:28:53.352245Z",
+  "generated_at": "2026-05-16T12:28:53.356649Z",
+  "events": [
+    {
+      "timestamp": "2026-05-16T12:28:53.352245Z",
+      "type": "session_start",
+      "payload": {
+        "agent_count": 2
+      }
+    },
+    {
+      "timestamp": "2026-05-16T12:28:53.353242Z",
+      "type": "agent_decision",
+      "payload": {
+        "agent": "financial_stability",
+        "decision": "CONDITIONAL_APPROVE",
+        "risk_score": 0.42,
+        "confidence": 0.72
+      }
+    },
+    {
+      "timestamp": "2026-05-16T12:28:53.355649Z",
+      "type": "agent_decision",
+      "payload": {
+        "agent": "strategic_growth",
+        "decision": "CONDITIONAL_APPROVE",
+        "risk_score": 0.42,
+        "confidence": 0.72
+      }
+    }
+  ]
+}

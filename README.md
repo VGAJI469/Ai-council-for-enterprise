@@ -37,6 +37,23 @@
 
 ---
 
+## 🔒 Logging and Audit
+
+This project includes a centralized structured logging and audit framework to help trace council sessions, debate rounds, agent decisions, and runtime failures.
+
+- Log files are written to the `logs/` directory: `app.log`, `error.log`, and `audit.log`.
+- Session audit reports are written as JSON to `reports/session_reports/session_<id>.json`.
+- Logs are JSON-structured and include timestamps, logger names and optional metadata (e.g. `session_id`, `agent`).
+
+Usage notes:
+
+1. Start the FastAPI app as normal; the app initializes the structured logging on startup.
+2. After a `/council/run` request completes, a session audit report is generated automatically.
+3. Inspect `logs/app.log` and `logs/error.log` for operational events and warnings.
+
+
+---
+
 ## 📌 The Problem This Solves
 
 Enterprise decisions fail — not from lack of data, but from structural flaws in how decisions are made:
