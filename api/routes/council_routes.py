@@ -1,6 +1,7 @@
 """Council REST API routes."""
 import uuid
 import yaml
+import agents
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -150,6 +151,10 @@ async def run_council(req: CaseRequest):
                 logger.exception("Failed to record agent prediction to audit")
 
         result = agg.aggregate(predictions)
+
+        consensus_risk = result["aggregate_risk_score"]
+        for agent in agents:
+            agent.last_consensus_risk = consensus_risk
 
         payload = {
             "session_id":            session_id,
