@@ -67,6 +67,51 @@ class CEOSupervisionController:
 
         self._supervision_log: List[Dict[str, Any]] = []
 
+    # ── External sync ─────────────────────────────────────────────────────────
+
+    def sync_ceo_agent(self, new_ceo_agent) -> None:
+        """
+        Re-attach supervision to a replacement CEO that was created outside
+        this controller (e.g. by a future code path in EvolutionController).
+
+        Without this call, self.ceo_agent would keep pointing at the retired
+        agent object.  evaluate_after_session() would silently continue reading
+        its config, calling ceo_mutator.mutate() on stale state, and incrementing
+        the generation counter against a dead object — with no exception raised
+        and no warning logged.
+
+        Call this immediately after any external CEO replacement so that:
+          - All subsequent evaluate_after_session() calls operate on the live agent.
+          - The generation counter resets for the new CEO (prevents the cap from
+            firing on inherited mutation count from the previous agent).
+          - The transition is recorded in the supervision log for auditability.
+
+        Parameters
+        ----------
+        new_ceo_agent : The replacement CEO agent (BaseAgent subclass).
+        """
+        if new_ceo_agent is self.ceo_agent:
+            # No change — nothing to do.
+            return
+
+        old_id = getattr(self.ceo_agent, "agent_id", "unknown")
+        new_id = getattr(new_ceo_agent, "agent_id", "unknown")
+
+        self._supervision_log.append({
+            "timestamp":      datetime.now(timezone.utc).isoformat(),
+            "event":          "external_ceo_replacement",
+            "retired_agent":  old_id,
+            "new_agent":      new_id,
+        })
+
+        logger.warning(
+            "[CEO_SUPERVISION] External replacement detected — reattaching supervision "
+            "| retired=%s new=%s",
+            old_id, new_id,
+        )
+
+        self.ceo_agent = new_ceo_agent
+
     # ── Core evaluation ───────────────────────────────────────────────────────
 
     def evaluate_after_session(self):

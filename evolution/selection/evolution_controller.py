@@ -212,8 +212,28 @@ class EvolutionController:
         Weakest agent is still the one with the lowest credibility (as before),
         but the replacement PARENT is now chosen by composite fitness score rather
         than raw credibility, ensuring the best all-round agent propagates.
+
+        Note: The CEO role is explicitly excluded from evolutionary replacement.
+        The CEO has a dedicated governance path via CEOSupervisionController.
+        Allowing EvolutionController to replace the CEO silently breaks that
+        supervision loop — CEOSupervisionController would keep running against
+        the retired agent object with no exception raised.
         """
-        weakest  = credibility_manager.get_lowest(agents)
+        # --- FIX: Exclude CEO from evolutionary replacement ---
+        # The CEO is governed separately by CEOSupervisionController.
+        # If the CEO happens to have the lowest credibility score, it must not
+        # be removed here — doing so creates a ghost-reference bug where
+        # CEOSupervisionController continues mutating a retired agent object.
+        non_ceo_agents = [a for a in agents if a.role != "CEO"]
+
+        if not non_ceo_agents:
+            # Edge case: council consists entirely of CEO agents — nothing to evolve.
+            logger.debug("[EVOLUTION] No non-CEO agents to evaluate; skipping cycle.")
+            return agents
+
+        weakest  = credibility_manager.get_lowest(non_ceo_agents)
+        # --- END FIX ---
+
         role     = weakest.role
         self.underperformance_streak[role] = self.underperformance_streak.get(role, 0) + 1
 
