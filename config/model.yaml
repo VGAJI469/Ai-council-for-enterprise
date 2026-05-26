@@ -27,22 +27,16 @@ llm:
   # Available locally hosted models
   models:
     - name: llama3
-      tag: llama3
-      use_for: [ceo, pr]
-    - name: deepseek-r1
-      tag: deepseek-r1
-      use_for: [cfo, legal]
-    - name: mistral
-      tag: mistral
-      use_for: [marketing]
+      tag: llama3:8b
+      use_for: [ceo, pr, cfo, marketing, legal]
     - name: phi
-      tag: phi3
+      tag: phi3:mini
       use_for: [fallback]
 
   # Role → model assignment
   role_model_map:
     strategic_growth:     llama3
-    financial_stability:  deepseek-r1
-    market_expansion:     mistral
-    reputation_risk:      llama3
-    regulatory_compliance: deepseek-r1
+    financial_stability:  llama3
+    market_expansion:     llama3
+    reputation_risk:      phi3
+    regulatory_compliance: llama3

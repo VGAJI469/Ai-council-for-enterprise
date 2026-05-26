@@ -6,3 +6,4 @@ __pycache__/
 logs/
 outputs/
 .DS_Store
+pipeline/risk_model.pkl
