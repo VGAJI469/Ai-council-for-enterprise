@@ -9,6 +9,7 @@
 [![Ollama](https://img.shields.io/badge/Ollama-Local_LLMs-black?style=for-the-badge)](https://ollama.com)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-FF6B35?style=for-the-badge)](https://trychroma.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+![Docker Support](https://img.shields.io/badge/Docker-Supported-blue?style=for-the-badge&logo=docker&logoColor=white)
 
 <br/>
 
