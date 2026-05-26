@@ -141,6 +141,24 @@ async def run_council(req: CaseRequest):
 
         predictions = []
         audit.record_event("session_request", {"case": req.case})
+
+        # Intercept using Predictive ML Pipeline
+
+        try:
+            from pipeline.risk_predictor import risk_engine
+            # Generate quantitative risk metric
+            prob_percent = risk_engine.predict_risk_percentage(context)
+            metric_msg = f"The quantitative risk engine calculates a {prob_percent:.1f}% probability of default based on macro parameters. Factor this statistical baseline into your corporate deliberation."
+
+            # Inject directly into the context payload for the agents
+            context["quantitative_risk_metric"] = metric_msg
+
+            # Prepend the metric explicitly to the decision topic to guarantee the LLM sees it
+            context["decision_topic"] = f"{metric_msg}\n\nCase: {req.case}"
+            logger.info(f"Injected risk metric: {prob_percent:.1f}%")
+        except Exception as e:
+            logger.exception("Failed to run predictive ML intercept")
+
         for agent in agents:
             pred = agent.predict(context.copy())
             predictions.append(pred)
