@@ -20,8 +20,6 @@ echo "Ollama is running. Pulling required models sequentially..."
 
 # Define the models required by the system
 MODELS=(
-    "deepseek-r1:7b"
-    "mixtral:8x7b"
     "llama3:8b"
     "phi3:mini"
     "nomic-embed-text"

@@ -33,10 +33,10 @@ MODEL_REGISTRY = {
 # Reasoning-heavy roles use deepseek-r1, fast roles use phi
 ROLE_MODEL_MAP = {
     "strategic_growth":     "llama3",       # CEO  — balanced
-    "financial_stability":  "deepseek-r1",  # CFO  — deep reasoning
-    "market_expansion":     "mistral",      # Marketing — creative
-    "reputation_risk":      "llama3",       # PR   — balanced
-    "regulatory_compliance":"deepseek-r1",  # Legal — precise reasoning
+    "financial_stability":  "llama3",       # CFO  — deep reasoning
+    "market_expansion":     "llama3",       # Marketing — creative
+    "reputation_risk":      "phi3",         # PR   — balanced
+    "regulatory_compliance":"llama3",       # Legal — precise reasoning
 }
 
 DEFAULT_MODEL = "llama3"
