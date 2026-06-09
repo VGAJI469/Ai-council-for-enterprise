@@ -40,6 +40,8 @@ ROLE_MODEL_MAP = {
 }
 
 DEFAULT_MODEL = "llama3"
+
+
 OLLAMA_BASE_URL = "http://localhost:11434"
 
 # Per-model timeout overrides (in seconds)

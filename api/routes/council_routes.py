@@ -292,3 +292,50 @@ async def reset_ceo_supervision():
     except Exception as e:
         raise HTTPException(500, f"CEO supervision reset failed: {e}")
 
+
+# ── GET /council/debate (Streaming SSE) ───────────────────────────────────────
+from fastapi.responses import StreamingResponse
+from council.debate.boardroom_stream import run_debate_stream
+
+@router.get("/debate")
+async def stream_debate(
+    motion: str,
+    dti: float,
+    creditScore: float,
+    defaultProbability: float,
+):
+    """
+    Start a live, multi-round boardroom debate and stream execution updates
+    as Server-Sent Events (SSE).
+    """
+    context = {
+        "debt_to_income_ratio":      dti / 100.0,
+        "credit_score":              creditScore,
+        "default_probability":       defaultProbability / 100.0,
+        "market_growth_rate":        0.05,
+        "competitive_risk":          0.50,
+        "liquidity_ratio_inv":       0.40,
+        "cash_flow_risk":            0.40,
+        "regulatory_violation_prob": 0.15,
+        "policy_risk":               0.20,
+        "legal_risk":                0.15,
+        "compliance_score":          0.70,
+        "sentiment_risk":            0.30,
+        "brand_risk":                0.25,
+        "media_risk":                0.28,
+        "stakeholder_risk":          0.30,
+        "customer_churn_risk":       0.28,
+        "market_opportunity":        0.50,
+        "investment_amount":         10000000,
+        "payback_period_years":      3,
+    }
+
+    agents = _get_agents()
+    board, controller = _get_oversight_components()
+
+    return StreamingResponse(
+        run_debate_stream(motion, context, agents, board, controller),
+        media_type="text/event-stream"
+    )
+
+

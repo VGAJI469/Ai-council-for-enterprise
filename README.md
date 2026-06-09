@@ -637,8 +637,12 @@ cp your_npa_report.txt   council/rag/knowledge_base/cfo/
 # 6. Build the knowledge base (run once)
 python ingest.py
 
-# 7. Start the server
-uvicorn main:app --reload --port 8000
+# 7. Start the FastAPI backend
+uvicorn api.main:app --reload --port 8000
+
+# 8. Start the Next.js dashboard (in a separate terminal)
+cd frontend
+npm run dev
 ```
 
 ### Run Your First Council Session
@@ -758,8 +762,8 @@ EMBED_MODEL=nomic-embed-text         # Local embedding model
 - [x] CEO Supervision Controller — automated governance loop with generation cap
 - [x] Management API — `/council/ceo/supervision` + `/council/ceo/reset-supervision`
 - [ ] Persistent session storage with SQLite
-- [ ] Streaming API — token-level streaming per agent
-- [ ] React web dashboard for live council sessions
+- [x] Streaming API — real-time round-level EventSource/SSE streams
+- [x] React web dashboard for live council sessions
 - [ ] Custom agent builder via API — no code changes needed
 - [ ] Fine-tuned domain models for CFO and Legal agents
 - [ ] Multi-council support — parallel sessions on different decisions
