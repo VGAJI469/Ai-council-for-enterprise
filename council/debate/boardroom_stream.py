@@ -118,7 +118,11 @@ The board is debating the following motion:
 
 You are the {title}. This is your opening statement to the full executive council.
 Give your complete, detailed position on this motion.
-Speak in first person. Be direct. Minimum 250 words.
+Cover every angle relevant to your role — opportunities, risks, financials,
+strategy, compliance, reputation — whatever matters most to your mandate.
+Be direct, opinionated, and thorough. This is not a summary. This is your argument.
+Speak in first person as if addressing the room.
+Minimum 250 words. End with a clear, complete concluding sentence.
 """
         # Run speak & predict in background threads
         response = await asyncio.to_thread(speak, agent, prompt, DEBATE_MAX_TOKENS, 0.55, 1)
@@ -162,12 +166,21 @@ Speak in first person. Be direct. Minimum 250 words.
         title = ROLE_TITLES.get(agent.role, agent.role)
         prompt = f"""
 The board is debating: "{motion_short}"
+
 Here is what every executive said in their opening statement:
+
 {all_openings}
 
-You are the {title}. Respond directly to your colleagues.
-Challenge assumptions and bring new arguments.
-Speak as if you are interrupting the meeting. Minimum 200 words.
+You are the {title}. You have just heard all of your colleagues speak.
+Now respond directly to the room. 
+- Pick out specific things others said that you agree or strongly disagree with
+- Name the person you are responding to by their title
+- Challenge any assumptions you think are wrong
+- Defend your own position if someone contradicted you
+- Bring new arguments or evidence to the table that strengthens your case
+- Be conversational, direct, and unafraid to push back
+Speak as if you are interrupting the meeting to make your point heard.
+Minimum 200 words. End with a clear, complete concluding sentence.
 """
         response = await asyncio.to_thread(speak, agent, prompt, DEBATE_MAX_TOKENS, 0.50, 2)
         cross_statements[agent.role] = response
@@ -200,12 +213,20 @@ Speak as if you are interrupting the meeting. Minimum 200 words.
         title = ROLE_TITLES.get(agent.role, agent.role)
         prompt = f"""
 The board is still debating: "{motion_short}"
+
 Here is what each executive said in the cross examination round:
 {all_cross}
 
 You are the {title}. This is the rebuttal round.
-Defend your position and expose the weakest argument made by others.
-Minimum 150 words.
+The debate has gotten more intense. People have challenged your position.
+Now fight back. 
+- Directly address the most aggressive challenge made against your position
+- Expose the weakest argument made by one of your colleagues
+- Make your strongest single argument — the one point you will not back down from
+- If you have shifted your position slightly based on what you heard, explain why
+- End with a clear statement of where you stand
+Be passionate, sharp, and decisive. No more than 150 words but make every word count.
+End with a definitive concluding statement.
 """
         response = await asyncio.to_thread(speak, agent, prompt, 800, 0.50, 3)
         rebuttal_statements[agent.role] = response
@@ -237,8 +258,20 @@ Minimum 150 words.
         title = ROLE_TITLES.get(agent.role, agent.role)
         prompt = f"""
 The board has been debating: "{motion_short}"
-What can you agree on? Suggest one compromise.
-End with your final lean: FOR, AGAINST, or CONDITIONAL. Maximum 120 words.
+
+After three rounds of debate, the chair is asking each executive:
+What can you agree on? Where is there common ground?
+
+Here is what each executive said in the rebuttal round:
+{all_rebuttals}
+
+You are the {title}.
+- State the one or two things every executive in this room seems to agree on
+- State clearly what your non-negotiable condition is before you support this motion
+- Suggest one specific compromise that could bring the council together
+- End with your final lean: are you FOR, AGAINST, or CONDITIONAL on this motion?
+Be concise and constructive. Maximum 120 words.
+End with a complete sentence stating your position.
 """
         response = await asyncio.to_thread(speak, agent, prompt, 600, 0.50, 4)
         common_ground[agent.role] = response
@@ -267,18 +300,29 @@ End with your final lean: FOR, AGAINST, or CONDITIONAL. Maximum 120 words.
     ceo = next(a for a in agents if a.role == 'strategic_growth')
     verdict_prompt = f"""
 This board has debated the motion: "{motion_short}"
+
+You have heard four full rounds of debate from your CFO, CMO, PR Director, and Legal Counsel.
+
 Here is where everyone landed:
 {all_common}
 
-You are the CEO. Deliver the final verdict.
+You are the CEO. The debate is now closed. Deliver the final verdict.
 Structure your closing exactly like this:
 
-RISK CLASSIFICATION: (Low / Medium / High) — one sentence.
-WHAT THE COUNCIL GOT RIGHT: list executives.
-KEY POINT OF CONTENTION: main disagreement.
-FINAL DECISION: State clearly proceeding, rejecting, or conditionally approving.
-ACTION PLAN: 5 steps with owners.
-CLOSING STATEMENT: one paragraph summary.
+RISK CLASSIFICATION: (Low / Medium / High) — one sentence on why.
+
+WHAT THE COUNCIL GOT RIGHT: Name each executive and one key insight they contributed.
+
+KEY POINT OF CONTENTION: What was the biggest disagreement and how do you resolve it?
+
+FINAL DECISION: State clearly whether the company will proceed, reject, or conditionally approve this motion.
+
+ACTION PLAN: Five specific steps the company will take, with who owns each step.
+
+CLOSING STATEMENT: One powerful paragraph that captures the spirit of this decision and what it means for the company.
+
+Be authoritative, decisive, and clear. This is the binding decision. Minimum 350 words.
+End with a powerful, complete closing sentence.
 """
     verdict = await asyncio.to_thread(speak, ceo, verdict_prompt, 1200, 0.5, 5)
 
@@ -301,6 +345,7 @@ CLOSING STATEMENT: one paragraph summary.
     }
     yield f"data: {json.dumps(msg)}\n\n"
     await asyncio.sleep(0.5)
+
 
     # ── Vote aggregation & results ──
     prediction_list = list(predictions.values())
