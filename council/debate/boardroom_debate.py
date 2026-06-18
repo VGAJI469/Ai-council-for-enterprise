@@ -27,6 +27,8 @@ import io
 import hashlib
 import time
 
+from tests.test_accuracy import agents
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
@@ -430,6 +432,9 @@ End with a powerful, complete closing sentence.
 
     # ── Vote Tally ─────────────────────────────────────────────────────
     result = agg.aggregate(predictions)
+    consensus_risk = result["aggregate_risk_score"]
+    for agent in agents:
+        agent.last_consensus_risk = consensus_risk
 
     print()
     print('=' * 70)

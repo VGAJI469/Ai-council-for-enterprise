@@ -68,6 +68,12 @@ class CouncilSession:
                     logger.exception("Failed to record error to audit")
         
         return self.predictions
+    def _propagate_consensus(self, consensus_risk: float) -> None:
+        for agent in self.agents:
+            agent.last_consensus_risk = consensus_risk
+        logger.info(
+            f"Council session {self.session_id} — consensus risk propagated: {consensus_risk:.4f}"
+    )
 
     def _create_fallback_prediction(self, agent) -> AgentPrediction:
         """Create a safe fallback prediction when agent fails."""
