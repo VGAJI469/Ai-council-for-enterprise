@@ -33,6 +33,7 @@ Upgrade notes:
 import logging
 import random
 import hashlib
+import pandas as pd
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
@@ -181,7 +182,10 @@ class BaseAgent(ABC):
         """
         # Base ML score (from XGBoost) or feature-derived heuristic
         if self.model is not None:
-            base_risk = self.model.predict_proba(financial_data)
+            # base_risk = self.model.predict_proba(financial_data) -> here financial_data is a dict
+            input_df = pd.DataFrame([financial_data])
+            base_risk = float(self.model.predict_proba(input_df)[0][1])
+
         else:
             base_risk = financial_data.get("default_probability", 0.4)
 
