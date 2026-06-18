@@ -319,7 +319,8 @@ class BaseAgent(ABC):
 
         cs_norm    = max(0.0, min((cs - 300) / 550.0, 1.0))
         dti_flag   = 1.0 if dti > 0.45 else (dti / 0.45)
-        cs_flag    = 1.0 if cs_norm < 0.40 else (0.40 - cs_norm + 0.40) / 0.40
+        # cs_flag    = 1.0 if cs_norm < 0.40 else (0.40 - cs_norm + 0.40) / 0.40
+        cs_flag = 1.0 if cs_norm < 0.40 else (0.80 - cs_norm) / 0.40
         cs_flag    = max(0.0, cs_flag)
         vol_norm   = min(vol / 0.40, 1.0)
 

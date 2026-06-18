@@ -614,7 +614,7 @@ adaptive-ai-council/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/ai-council.git
+git clone https://github.com/VGAJI469/Ai-council-for-enterprise.git
 cd ai-council
 
 # 2. Install dependencies
