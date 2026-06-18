@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: council-api
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE=http://ollama:11434
+      - CHROMA_PATH=./chroma_store
+      - KNOWLEDGE_PATH=./council/rag/knowledge_base
+      - MAX_DEBATE_ROUNDS=3
+      - EMBED_MODEL=nomic-embed-text
+    volumes:
+      - .:/app
+    depends_on:
+      - ollama
+    networks:
+      - council-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: council-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama
+      - ./init-ollama.sh:/init-ollama.sh
+    entrypoint: /bin/bash /init-ollama.sh
+    networks:
+      - council-network
+
+networks:
+  council-network:
+    driver: bridge
+
+volumes:
+  ollama_storage:
+    name: ollama_storage

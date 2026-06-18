@@ -9,6 +9,7 @@
 [![Ollama](https://img.shields.io/badge/Ollama-Local_LLMs-black?style=for-the-badge)](https://ollama.com)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-FF6B35?style=for-the-badge)](https://trychroma.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+![Docker Support](https://img.shields.io/badge/Docker-Supported-blue?style=for-the-badge&logo=docker&logoColor=white)
 
 <br/>
 
@@ -790,3 +791,17 @@ MIT License — see [LICENSE](LICENSE) for details.
 *Five agents enter. The best decision wins.*
 
 </div>
+
+---
+
+## 🐳 Running with Docker
+
+![Docker Support](https://img.shields.io/badge/Docker-Supported-blue?style=for-the-badge&logo=docker&logoColor=white)
+
+You can run the entire stack seamlessly using Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+For more details on the multi-container architecture and automated model pulling, see the [DOCKER_README.md](DOCKER_README.md).
