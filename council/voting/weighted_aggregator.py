@@ -13,23 +13,13 @@ logger = logging.getLogger(__name__)
 
 DECISION_SCORES = {"APPROVE": 0.0, "CONDITIONAL_APPROVE": 0.5, "REJECT": 1.0}
 
-# Map risk_score float ranges → qualitative risk bands used in compute_risk_score
-def _risk_band(risk_score: float) -> float:
-    """Convert a continuous risk score into a risk band float for aggregation."""
-    if risk_score < 0.35:
-        return 0.20   # LOW
-    elif risk_score < 0.60:
-        return 0.50   # MODERATE
-    else:
-        return 0.90   # HIGH
-
 
 def compute_risk_score(predictions: List[AgentPrediction]) -> float:
     """
     Compute aggregate risk from actual agent predictions each run.
 
     Formula:
-      base_risk        = credibility-weighted average of per-agent risk bands
+      base_risk        = credibility-weighted average of per-agent risk scores
       conf_penalty     = 1 - credibility-weighted confidence (low confidence → higher risk)
       dissent_factor   = (reject_votes / total_votes) * 0.3
 
@@ -43,7 +33,7 @@ def compute_risk_score(predictions: List[AgentPrediction]) -> float:
         total_cred = len(predictions)
 
     base_risk = sum(
-        _risk_band(p.risk_score) * p.credibility for p in predictions
+       p.risk_score * p.credibility for p in predictions
     ) / total_cred
 
     weighted_conf = sum(p.confidence * p.credibility for p in predictions) / total_cred
