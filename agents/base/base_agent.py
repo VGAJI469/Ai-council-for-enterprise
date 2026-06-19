@@ -325,7 +325,9 @@ class BaseAgent(ABC):
 
         uncertainty = 0.40 * dti_flag + 0.30 * cs_flag + 0.30 * vol_norm
         sigma       = 0.02 + 0.06 * uncertainty
-        return random.gauss(0, sigma)
+        seed = (self._base_seed + len(self.prediction_history)) % 100000
+        rng  = random.Random(seed)
+        return rng.gauss(0, sigma)
 
     # ── Item 6 — Memory-aware system prompt suffix ────────────────────────────
 
