@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Award } from "lucide-react"
 import {
   AGENT_ORDER,
@@ -43,6 +43,51 @@ export default function Page() {
   const [showOutcome, setShowOutcome] = useState(false)
   const esRef = useRef<EventSource | null>(null)
 
+  const fetchCredibility = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agents/status")
+      if (!res.ok) throw new Error("Failed to fetch agent status")
+      const data = await res.json()
+      const roleMap: Record<string, string> = {
+        strategic_growth: "CEO",
+        financial_stability: "CFO",
+        regulatory_compliance: "LEGAL",
+        market_expansion: "CMO",
+        reputation_risk: "PR",
+      }
+      if (data.agents && Array.isArray(data.agents)) {
+        const scores = data.agents.map((a: any) => ({
+          role: roleMap[a.role] || "CEO",
+          score: Math.round(a.credibility * 100),
+        }))
+        setCredibility(scores)
+      }
+    } catch (err) {
+      console.error("Error loading credibility scores:", err)
+    }
+  }, [])
+
+  const fetchOversight = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ceo/supervision")
+      if (!res.ok) throw new Error("Failed to fetch oversight status")
+      const data = await res.json()
+      setOversight({
+        supervisionScore: data.supervision_score,
+        overrideStreak: data.override_streak,
+        ceoGeneration: data.ceo_generation,
+        dominantPattern: data.dominant_pattern,
+      })
+    } catch (err) {
+      console.error("Error loading oversight status:", err)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCredibility()
+    fetchOversight()
+  }, [fetchCredibility, fetchOversight])
+
   const startDebate = useCallback((cfg: DebateConfig) => {
     esRef.current?.close()
     setConfig(cfg)
@@ -57,6 +102,7 @@ export default function Page() {
       dti: String(cfg.dti),
       creditScore: String(cfg.creditScore),
       defaultProbability: String(cfg.defaultProbability),
+      _cb: String(Date.now()),
     })
     const es = new EventSource(`/api/debate?${params.toString()}`)
     esRef.current = es

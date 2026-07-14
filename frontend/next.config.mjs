@@ -9,8 +9,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/debate',
-        destination: 'http://localhost:8000/council/debate',
+        source: '/api/:path*',
+        destination: 'http://localhost:8000/council/:path*',
       },
     ]
   }

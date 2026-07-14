@@ -137,9 +137,13 @@ class BaseAgent(ABC):
         self.llm             = llm_client or LocalLLMClient()
         self.preferred_model = ROLE_MODEL_MAP.get(self.role, "llama3")
 
-        # Item 4 — dynamic blend ratio (initialised at the canonical 0.6/0.4)
-        self._ml_weight      = 0.60
-        self._role_weight    = 0.40
+        # Item 4 — dynamic blend ratio (initialised at 0.6/0.4, or 0.0/1.0 if no model)
+        if self.model is None:
+            self._ml_weight   = 0.0
+            self._role_weight = 1.0
+        else:
+            self._ml_weight   = 0.60
+            self._role_weight = 0.40
         self._blend_history: list = []     # (base_error, role_error) per cycle
         self.last_consensus_risk: float = 0.50   # set externally by pipeline after each cycle
 
@@ -250,7 +254,7 @@ class BaseAgent(ABC):
             role_risk=round(role_risk, 4),
         )
 
-    # ── Item 4 — Dynamic blend ratio ─────────────────────────────────────────
+    # ── Item 4 - Dynamic blend ratio ─────────────────────────────────────────
 
     def _update_blend_ratio(self, base_risk: float, role_risk: float,
                             consensus_risk: float) -> None:
@@ -258,7 +262,7 @@ class BaseAgent(ABC):
         Adjust the ML/role blend weights based on which component tracked the
         council consensus more accurately over the last 10 predictions.
 
-        Ground truth proxy: council consensus risk (always available — no labels
+        Ground truth proxy: council consensus risk (always available - no labels
         needed). The component that was closer to consensus on average gains
         weight; the other loses weight symmetrically.
 
@@ -269,6 +273,11 @@ class BaseAgent(ABC):
         Replaces the hardcoded 0.6 * base_risk + 0.4 * role_risk which never
         adapted regardless of which component was performing better.
         """
+        if self.model is None:
+            self._ml_weight   = 0.0
+            self._role_weight = 1.0
+            return
+
         base_error = abs(base_risk - consensus_risk)
         role_error = abs(role_risk - consensus_risk)
         self._blend_history.append((base_error, role_error))
@@ -289,12 +298,12 @@ class BaseAgent(ABC):
                 self._role_weight = min(self._role_weight + step, 0.85)
                 self._ml_weight   = max(self._ml_weight   - step, 0.15)
 
-        # Slow decay toward baseline (0.6/0.4) — prevents irreversible drift
+        # Slow decay toward baseline (0.6/0.4) - prevents irreversible drift
         decay = 0.005
         self._ml_weight   += decay * (0.60 - self._ml_weight)
         self._role_weight += decay * (0.40 - self._role_weight)
 
-    # ── Item 5 — Calibrated jitter ────────────────────────────────────────────
+    # ── Item 5 - Calibrated jitter ────────────────────────────────────────────
 
     def _compute_jitter(self, features: dict) -> float:
         """
@@ -323,13 +332,13 @@ class BaseAgent(ABC):
         sigma       = 0.02 + 0.06 * uncertainty
         return random.gauss(0, sigma)
 
-    # ── Item 6 — Memory-aware system prompt suffix ────────────────────────────
+    # ── Item 6 - Memory-aware system prompt suffix ────────────────────────────
 
     def _build_memory_suffix(self) -> str:
         """
         Build a compact dynamic context block appended to the static system prompt.
 
-        Gives the LLM situational awareness on every call — without this, the LLM
+        Gives the LLM situational awareness on every call - without this, the LLM
         always reasons from a blank-slate persona with no memory of prior cycles.
 
         Kept deliberately compact (~80 tokens) to avoid crowding out reasoning within
@@ -360,26 +369,10 @@ class BaseAgent(ABC):
         lines.append("--- End Context ---")
         return "\n".join(lines)
 
-    # ── Item 7 — Domain-intelligent reasoning prompt ──────────────────────────
+    # ── Item 7 - Domain-intelligent reasoning prompt ──────────────────────────
 
     def _generate_reasoning(self, data: dict, risk: float, decision: str):
-        """
-        Generate role-specific reasoning using a locally hosted LLM.
-
-        Replaces the generic 4-metric prompt (DTI, credit score, loan amount,
-        GDP growth) which was identical for every role. Now:
-          - Dynamically selects the 4–6 most relevant metrics for this agent's role
-          - Flags any metric in a critical danger zone with a ⚠ marker
-          - Includes a compact council credibility distribution so the LLM knows
-            whose influence dominates the current session
-          - max_tokens raised to 500 to accommodate the richer prompt context
-          - Retries up to MAX_REASONING_RETRIES times on empty/short output
-
-        Stability improvements:
-          - Temperature narrowed to [0.50, 0.65] for more consistent output
-          - Deterministic seed derived from agent_id for reproducibility
-          - Retry logic with progressive token budget increase
-        """
+        """Generate role-specific reasoning using a locally hosted LLM."""
         # Role-relevant metric selection
         role_metric_keys = ROLE_METRICS.get(self.role, [
             "debt_to_income_ratio", "credit_score", "loan_amount", "gdp_growth_rate"
@@ -427,8 +420,8 @@ class BaseAgent(ABC):
             f"End with a clear, complete concluding sentence."
         )
 
-        # Deterministic seed from agent ID + prediction count
-        seed = (self._base_seed + len(self.prediction_history)) % 100000
+        # Seed disabled to allow dynamic reasoning and prediction variations on every run
+        seed = None
         temperature = round(random.uniform(REASONING_TEMP_LOW, REASONING_TEMP_HIGH), 2)
 
         # Generation happens via validated generate_with_validation below
@@ -463,9 +456,7 @@ class BaseAgent(ABC):
 
     def update_credibility(self, alpha, beta, gamma, delta,
                            performance, agreement, historical_error):
-        """
-        Credibility(t+1) = α·C(t) + β·Performance + γ·Agreement − δ·HistoricalError
-        """
+        """Update credibility based on performance, agreement, and historical error."""
         self.credibility = (
             alpha * self.credibility
             + beta  * performance

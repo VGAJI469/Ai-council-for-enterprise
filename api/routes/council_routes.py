@@ -19,6 +19,8 @@ _oversight_board       = None
 _supervision_controller = None
 _performance_tracker   = None
 _ceo_mutator           = None
+_evolution_controller  = None
+_agent_mutator         = None
 
 
 def _get_agents():
@@ -28,6 +30,12 @@ def _get_agents():
             cfg = yaml.safe_load(f)
         _factory = AgentFactory()
         _agents  = _factory.build_council(cfg)
+        try:
+            from evolution.selection.evolution_controller import load_prediction_history
+            load_prediction_history(_agents)
+        except Exception as e:
+            import logging
+            logging.getLogger("api.routes.council").error(f"Failed to load prediction history: {e}")
     return _agents
 
 
@@ -70,6 +78,51 @@ def _get_oversight_components():
         )
 
     return _oversight_board, _supervision_controller
+
+
+def _get_evolution_components():
+    """
+    Lazy-initialise the general evolution controller and agent mutator.
+    These are singletons — shared across every request.
+    """
+    global _evolution_controller, _agent_mutator, _factory
+
+    if _evolution_controller is None:
+        from evolution.selection.evolution_controller import EvolutionController
+        from evolution.mutation.agent_mutator         import AgentMutator
+
+        # Instantiate factory if not already done
+        _get_agents()
+
+        with open("config/agents.yaml") as f:
+            cfg = yaml.safe_load(f)
+        cred_cfg = cfg.get("credibility", {})
+        thresh   = cred_cfg.get("evolution_threshold", 3)
+
+        from council.credibility.credibility_manager import CredibilityTuner, CredibilityManager
+        tuner = CredibilityTuner(
+            alpha=cred_cfg.get("alpha", 0.7),
+            beta=cred_cfg.get("beta", 0.15),
+            gamma=cred_cfg.get("gamma", 0.10),
+            delta=cred_cfg.get("delta", 0.05)
+        )
+        cred_manager = CredibilityManager(
+            alpha=tuner.alpha,
+            beta=tuner.beta,
+            gamma=tuner.gamma,
+            delta=tuner.delta,
+            tuner=tuner
+        )
+
+        _evolution_controller = EvolutionController(evolution_threshold=thresh)
+        _evolution_controller.credibility_manager = cred_manager
+        
+        sup_cfg = cfg.get("ceo_supervision", {})
+        _agent_mutator        = AgentMutator(
+            mutation_params=sup_cfg.get("mutation_params", {})
+        )
+
+    return _evolution_controller, _agent_mutator
 
 
 # ── Request/Response models ───────────────────────────────────────────────────
@@ -332,10 +385,38 @@ async def stream_debate(
 
     agents = _get_agents()
     board, controller = _get_oversight_components()
+    evolution_controller, agent_mutator = _get_evolution_components()
 
+    async def debate_wrapper():
+        try:
+            async for chunk in run_debate_stream(
+                motion=motion,
+                context=context,
+                agents=agents,
+                oversight_board=board,
+                supervision_controller=controller,
+                evolution_controller=evolution_controller,
+                agent_mutator=agent_mutator,
+            ):
+                yield chunk
+        finally:
+            try:
+                from evolution.selection.evolution_controller import save_prediction_history, save_council_config
+                save_prediction_history(agents)
+                save_council_config(agents)
+            except Exception as e:
+                logger = get_logger("api.routes.council")
+                logger.error(f"Failed to persist state on stream disconnect: {e}")
+
+    headers = {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+    }
     return StreamingResponse(
-        run_debate_stream(motion, context, agents, board, controller),
-        media_type="text/event-stream"
+        debate_wrapper(),
+        media_type="text/event-stream",
+        headers=headers
     )
 
 

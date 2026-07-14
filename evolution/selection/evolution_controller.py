@@ -258,6 +258,7 @@ class EvolutionController:
             new_id, new_cfg = mutator.mutate(best_parent, parent_cfg)
             new_agent   = agent_factory.create_from_config(new_id, new_cfg, best_parent.model)
             new_agent._recently_evolved = True   # Item 6: flag for memory suffix
+            new_agent.prediction_history = list(best_parent.prediction_history)
             agents.append(new_agent)
 
             self.evolution_log.append({
@@ -275,3 +276,140 @@ class EvolutionController:
 
     def get_evolution_log(self) -> List[Dict]:
         return self.evolution_log
+
+
+# ── Persistence & Storage Utilities ──────────────────────────────────────────
+
+def save_prediction_history(agents, path="config/prediction_history.json"):
+    """Persist prediction histories of all agents to JSON."""
+    import json
+    import os
+    all_history = []
+    try:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                all_history = json.load(f)
+    except Exception as e:
+        logger.warning(f"Could not load existing history for merge: {e}")
+
+    # Build unique signatures map
+    existing_sigs = set()
+    for item in all_history:
+        sig = (item.get("agent_id"), item.get("timestamp"), item.get("reasoning"))
+        existing_sigs.add(sig)
+
+    for agent in agents:
+        for p in agent.prediction_history:
+            sig = (p.agent_id, p.timestamp.isoformat(), p.reasoning)
+            if sig not in existing_sigs:
+                all_history.append({
+                    "agent_id": p.agent_id,
+                    "agent_role": p.agent_role,
+                    "risk_score": p.risk_score,
+                    "confidence": p.confidence,
+                    "decision": p.decision,
+                    "reasoning": p.reasoning,
+                    "model_used": p.model_used,
+                    "timestamp": p.timestamp.isoformat(),
+                    "credibility": p.credibility,
+                    "base_risk": p.base_risk,
+                    "role_risk": p.role_risk,
+                })
+                existing_sigs.add(sig)
+
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(all_history, f, indent=2, ensure_ascii=False)
+        logger.info(f"Saved prediction history to {path}")
+    except Exception as e:
+        logger.error(f"Failed to write prediction history to {path}: {e}")
+
+
+def load_prediction_history(agents, path="config/prediction_history.json"):
+    """Load prediction histories from JSON and populate agents' roles."""
+    import json
+    import os
+    from datetime import datetime
+    from agents.base.base_agent import AgentPrediction
+
+    if not os.path.exists(path):
+        logger.info(f"No prediction history file found at {path}")
+        return
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.error(f"Failed to read prediction history from {path}: {e}")
+        return
+
+    from collections import defaultdict
+    role_history = defaultdict(list)
+    for item in data:
+        p = AgentPrediction(
+            agent_id=item["agent_id"],
+            agent_role=item["agent_role"],
+            risk_score=item["risk_score"],
+            confidence=item["confidence"],
+            decision=item["decision"],
+            reasoning=item["reasoning"],
+            model_used=item.get("model_used", ""),
+            timestamp=datetime.fromisoformat(item["timestamp"]),
+            credibility=item.get("credibility", 1.0),
+            base_risk=item.get("base_risk", 0.0),
+            role_risk=item.get("role_risk", 0.0),
+        )
+        role_history[p.agent_role].append(p)
+
+    for role in role_history:
+        role_history[role].sort(key=lambda x: x.timestamp)
+
+    for agent in agents:
+        agent.prediction_history = list(role_history[agent.role])
+    logger.info(f"Loaded prediction history for {len(agents)} agents from {path}")
+
+
+def save_council_config(agents, path="config/agents.yaml"):
+    """Update config/agents.yaml with the live agents' settings."""
+    import yaml
+    import copy
+    import os
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            full_cfg = yaml.safe_load(f) or {}
+    except Exception:
+        full_cfg = {}
+
+    if "agents" not in full_cfg:
+        full_cfg["agents"] = {}
+
+    focus_to_key = {
+        "strategic_growth": "ceo",
+        "financial_stability": "cfo",
+        "market_expansion": "marketing",
+        "reputation_risk": "pr",
+        "regulatory_compliance": "legal",
+    }
+
+    for agent in agents:
+        key = focus_to_key.get(agent.role)
+        if key:
+            cfg = copy.deepcopy(agent.config)
+            cfg["risk_threshold"] = float(agent.risk_threshold)
+            cfg["weights"] = {k: float(v) for k, v in agent.weights.items()}
+            cfg["initial_credibility"] = float(agent.credibility)
+            cfg["generation"] = int(agent.config.get("generation", 1))
+            cfg["agent_id"] = agent.agent_id
+            if hasattr(agent, "_recently_evolved"):
+                cfg["recently_evolved"] = agent._recently_evolved
+            full_cfg["agents"][key] = cfg
+
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(full_cfg, f, default_flow_style=False)
+        logger.info(f"Saved council config back to {path}")
+    except Exception as e:
+        logger.error(f"Failed to save council config to {path}: {e}")

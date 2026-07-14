@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 
 # Map friendly names → Ollama model tags
 MODEL_REGISTRY = {
-    "llama3":      "llama3",
-    "phi":         "phi3",
-    "deepseek-r1": "deepseek-r1",
-    "mistral":     "mistral",
+    "llama3":      "llama3:latest",
+    "phi":         "phi3:latest",
+    "deepseek-r1": "deepseek-r1:latest",
+    "mistral":     "mistral:latest",
 }
 
 # Role → preferred model mapping

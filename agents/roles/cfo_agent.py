@@ -23,10 +23,11 @@ class CFOAgent(BaseAgent):
 
     def compute_role_risk(self, features: dict) -> float:
         w = self.weights
+        default_prob = min(features.get("default_probability", 0.5) * 10.0, 1.0)
         score = (
             w.get("liquidity_risk",       0.35) * features.get("liquidity_ratio_inv",  0.5)
             + w.get("capital_preservation", 0.30) * features.get("debt_to_income_ratio", 0.5)
-            + w.get("default_probability",  0.25) * features.get("default_probability",  0.5)
+            + w.get("default_probability",  0.25) * default_prob
             + w.get("cash_flow",            0.10) * features.get("cash_flow_risk",        0.5)
         )
         return min(max(score, 0.0), 1.0)

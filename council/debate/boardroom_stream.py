@@ -83,12 +83,23 @@ def parse_ceo_verdict(verdict_text: str) -> dict:
     return {"action_plan": action_plan, "closing_statement": closing_statement}
 
 
+async def execute_task_with_keep_alive(task: asyncio.Task) -> AsyncGenerator[str, None]:
+    """Yield keep-alive SSE comments every 15 seconds while the task is running."""
+    while not task.done():
+        try:
+            await asyncio.wait_for(asyncio.shield(task), timeout=15.0)
+        except asyncio.TimeoutError:
+            yield ": keep-alive\n\n"
+
+
 async def run_debate_stream(
     motion: str,
     context: Dict[str, Any],
     agents: List,
     oversight_board,
     supervision_controller,
+    evolution_controller=None,
+    agent_mutator=None,
 ) -> AsyncGenerator[str, None]:
     """
     Run multi-round debate asynchronously and yield SSE JSON blocks.
@@ -124,9 +135,16 @@ Be direct, opinionated, and thorough. This is not a summary. This is your argume
 Speak in first person as if addressing the room.
 Minimum 250 words. End with a clear, complete concluding sentence.
 """
-        # Run speak & predict in background threads
-        response = await asyncio.to_thread(speak, agent, prompt, DEBATE_MAX_TOKENS, 0.55, 1)
-        pred = await asyncio.to_thread(agent.predict, context)
+        # Run speak & predict in background threads with keep-alive
+        task_speak = asyncio.create_task(asyncio.to_thread(speak, agent, prompt, DEBATE_MAX_TOKENS, 0.55, 1))
+        async for ka in execute_task_with_keep_alive(task_speak):
+            yield ka
+        response = await task_speak
+
+        task_pred = asyncio.create_task(asyncio.to_thread(agent.predict, context))
+        async for ka in execute_task_with_keep_alive(task_pred):
+            yield ka
+        pred = await task_pred
 
         opening_statements[agent.role] = response
         predictions[agent.role] = pred
@@ -182,7 +200,10 @@ Now respond directly to the room.
 Speak as if you are interrupting the meeting to make your point heard.
 Minimum 200 words. End with a clear, complete concluding sentence.
 """
-        response = await asyncio.to_thread(speak, agent, prompt, DEBATE_MAX_TOKENS, 0.50, 2)
+        task_speak = asyncio.create_task(asyncio.to_thread(speak, agent, prompt, DEBATE_MAX_TOKENS, 0.50, 2))
+        async for ka in execute_task_with_keep_alive(task_speak):
+            yield ka
+        response = await task_speak
         cross_statements[agent.role] = response
 
         # Re-use Round 1 prediction for metadata in later rounds
@@ -228,7 +249,10 @@ Now fight back.
 Be passionate, sharp, and decisive. No more than 150 words but make every word count.
 End with a definitive concluding statement.
 """
-        response = await asyncio.to_thread(speak, agent, prompt, 800, 0.50, 3)
+        task_speak = asyncio.create_task(asyncio.to_thread(speak, agent, prompt, 800, 0.50, 3))
+        async for ka in execute_task_with_keep_alive(task_speak):
+            yield ka
+        response = await task_speak
         rebuttal_statements[agent.role] = response
 
         pred = predictions[agent.role]
@@ -273,7 +297,10 @@ You are the {title}.
 Be concise and constructive. Maximum 120 words.
 End with a complete sentence stating your position.
 """
-        response = await asyncio.to_thread(speak, agent, prompt, 600, 0.50, 4)
+        task_speak = asyncio.create_task(asyncio.to_thread(speak, agent, prompt, 600, 0.50, 4))
+        async for ka in execute_task_with_keep_alive(task_speak):
+            yield ka
+        response = await task_speak
         common_ground[agent.role] = response
 
         pred = predictions[agent.role]
@@ -324,7 +351,10 @@ CLOSING STATEMENT: One powerful paragraph that captures the spirit of this decis
 Be authoritative, decisive, and clear. This is the binding decision. Minimum 350 words.
 End with a powerful, complete closing sentence.
 """
-    verdict = await asyncio.to_thread(speak, ceo, verdict_prompt, 1200, 0.5, 5)
+    task_speak = asyncio.create_task(asyncio.to_thread(speak, ceo, verdict_prompt, 1200, 0.5, 5))
+    async for ka in execute_task_with_keep_alive(task_speak):
+        yield ka
+    verdict = await task_speak
 
     # Build and yield CEO final verdict message
     ceo_pred = predictions[ceo.role]
@@ -367,14 +397,56 @@ End with a powerful, complete closing sentence.
     # Evaluate for mutation
     if supervision_controller is not None:
         # Evaluate streak and performance
-        supervision_controller.evaluate_after_session()
+        new_ceo = supervision_controller.evaluate_after_session()
+        if new_ceo is not ceo:
+            # Replace old CEO agent with the new CEO in the agents list
+            for i, agent in enumerate(agents):
+                if agent.role == 'strategic_growth':
+                    agents[i] = new_ceo
+                    break
+            ceo = new_ceo
 
     # Update credibility scores
-    cred_manager = CredibilityManager()
+    if evolution_controller is not None and evolution_controller.credibility_manager is not None:
+        cred_manager = evolution_controller.credibility_manager
+    else:
+        from council.credibility.credibility_manager import CredibilityManager
+        cred_manager = CredibilityManager()
+
     cred_manager.update_all(
         agents, prediction_list, result["final_decision"],
         consensus_risk=result['aggregate_risk_score']
     )
+
+    # Evaluate council for general agent evolution/mutation
+    if evolution_controller is not None:
+        evolution_controller.record_cycle_predictions(prediction_list)
+        import yaml
+        try:
+            with open("config/agents.yaml") as f:
+                cfg = yaml.safe_load(f)
+            configs = cfg.get("agents", {})
+        except Exception:
+            configs = {}
+            
+        mutated_agents = evolution_controller.evaluate_council(
+            agents=agents,
+            credibility_manager=cred_manager,
+            mutator=agent_mutator,
+            agent_factory=supervision_controller.agent_factory if supervision_controller else None,
+            configs=configs
+        )
+        if mutated_agents is not agents:
+            agents.clear()
+            agents.extend(mutated_agents)
+
+    # Save the updated configurations and prediction histories to disk
+    try:
+        from evolution.selection.evolution_controller import save_prediction_history, save_council_config
+        save_prediction_history(agents)
+        save_council_config(agents)
+    except Exception as e:
+        logger.error(f"Failed to persist state: {e}")
 
     # Yield credibility update
     cred_event = {

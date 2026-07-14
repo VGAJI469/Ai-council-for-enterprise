@@ -176,6 +176,7 @@ class CEOSupervisionController:
             new_id, new_config, model=None
         )
         new_agent._recently_evolved = True
+        new_agent.prediction_history = list(self.ceo_agent.prediction_history)
 
         new_gen = new_config.get("generation", "?")
         log_entry = {

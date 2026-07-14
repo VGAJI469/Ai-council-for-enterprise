@@ -150,12 +150,9 @@ def _build_role_context_block(agent, context: dict) -> str:
     return "\n".join(lines)
 
 
-# ── Agent seed utility ────────────────────────────────────────────────────────
-
-def _agent_seed(agent, round_num: int) -> int:
-    """Deterministic seed per agent per round for reproducibility."""
-    raw = f"{agent.agent_id}:{agent.role}:round{round_num}"
-    return int(hashlib.md5(raw.encode()).hexdigest()[:8], 16) % 100000
+def _agent_seed(agent, round_num: int) -> Optional[int]:
+    """Disable deterministic seed to allow dynamic generation on every run."""
+    return None
 
 
 # ── Core speak function with retry + validation ──────────────────────────────
@@ -237,6 +234,9 @@ def run_debate(
     cfg        = load_config()
     factory    = AgentFactory()
     agents     = factory.build_council(cfg)
+    from evolution.selection.evolution_controller import load_prediction_history
+    load_prediction_history(agents)
+    
     agg        = WeightedAggregator()
     session_id = uuid.uuid4().hex[:12]   # unique identifier for oversight board records
 
@@ -481,6 +481,12 @@ End with a powerful, complete closing sentence.
     if supervision_controller is not None:
         new_ceo = supervision_controller.evaluate_after_session()
         mutation_triggered = (new_ceo.agent_id != ceo.agent_id)
+        if mutation_triggered:
+            for i, agent in enumerate(agents):
+                if agent.role == 'strategic_growth':
+                    agents[i] = new_ceo
+                    break
+            ceo = new_ceo
         ceo_generation     = new_ceo.config.get('generation', 1)
         ceo_performance_score = supervision_controller.performance_tracker.get_score()
 
@@ -503,6 +509,44 @@ End with a powerful, complete closing sentence.
         'ceo_generation':         ceo_generation,
         'ceo_performance_score':  ceo_performance_score,
     })
+
+    # ── Credibility Update & General Agent Evolution ─────────────────
+    from council.credibility.credibility_manager import CredibilityManager
+    cred_manager = CredibilityManager()
+    cred_manager.update_all(
+        agents, predictions, result["final_decision"],
+        consensus_risk=result['aggregate_risk_score']
+    )
+
+    from evolution.selection.evolution_controller import EvolutionController
+    from evolution.mutation.agent_mutator import AgentMutator
+    
+    # Initialize evolution controller
+    with open("config/agents.yaml") as f:
+        cfg = yaml.safe_load(f)
+    cred_cfg = cfg.get("credibility", {})
+    thresh   = cred_cfg.get("evolution_threshold", 3)
+    evolution_controller = EvolutionController(evolution_threshold=thresh)
+    agent_mutator        = AgentMutator()
+    
+    # Record predictions and evaluate council
+    evolution_controller.record_cycle_predictions(predictions)
+    configs = cfg.get("agents", {})
+    mutated_agents = evolution_controller.evaluate_council(
+        agents=agents,
+        credibility_manager=cred_manager,
+        mutator=agent_mutator,
+        agent_factory=factory,
+        configs=configs
+    )
+    if mutated_agents is not agents:
+        agents.clear()
+        agents.extend(mutated_agents)
+
+    # Save updated prediction history and council configurations back to disk
+    from evolution.selection.evolution_controller import save_prediction_history, save_council_config
+    save_prediction_history(agents)
+    save_council_config(agents)
 
     return result
 
