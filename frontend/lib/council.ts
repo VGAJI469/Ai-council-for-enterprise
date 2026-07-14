@@ -107,9 +107,9 @@ export type DebateEvent =
   | { type: "session_end" }
 
 export function decisionColor(decision: Decision | Verdict) {
-  if (decision === "APPROVE") return "var(--agent-cfo)"
-  if (decision === "REJECT") return "var(--agent-ceo)"
-  return "var(--agent-cmo)" // CONDITIONAL / CONDITIONAL APPROVE
+  if (decision === "APPROVE") return "var(--decision-approve)"
+  if (decision === "REJECT") return "var(--decision-reject)"
+  return "var(--decision-conditional)" // CONDITIONAL / CONDITIONAL APPROVE
 }
 
 export function agentColor(role: AgentRole) {

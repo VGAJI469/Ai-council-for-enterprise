@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Landmark, Radio } from "lucide-react"
+import { Building2, Play, Circle } from "lucide-react"
 import type { DebateConfig } from "@/lib/council"
 
 interface CouncilHeaderProps {
@@ -27,14 +27,14 @@ export function CouncilHeader({ status, config, onStart, disabled }: CouncilHead
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex size-11 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30">
-            <Landmark className="size-6" />
+            <Building2 className="size-6" />
           </div>
           <div>
-            <h1 className="text-pretty text-lg font-semibold tracking-tight md:text-xl">
-              AI Enterprise Council Dashboard
+            <h1 className="text-pretty text-2xl font-bold tracking-tight text-primary md:text-3xl" style={{ fontFamily: 'var(--font-dm-sans)' }}>
+              Executive Council Dashboard
             </h1>
-            <p className="text-xs text-muted-foreground">
-              Multi-agent deliberation &middot; weighted consensus engine
+            <p className="mt-1 text-xs text-muted-foreground">
+              Decision deliberation &middot; weighted consensus analysis
             </p>
           </div>
         </div>
@@ -54,7 +54,7 @@ export function CouncilHeader({ status, config, onStart, disabled }: CouncilHead
                 className="size-2 rounded-full bg-[var(--agent-ceo)]"
                 style={{ animation: "pulse-dot 1.1s ease-in-out infinite" }}
               />
-              <Radio className="size-3.5 text-[var(--agent-ceo)]" />
+              <Circle className="size-3.5 text-[var(--agent-ceo)] fill-[var(--agent-ceo)]" />
               <span className="text-[var(--agent-ceo)]">Live Streaming</span>
             </>
           ) : (
@@ -69,7 +69,7 @@ export function CouncilHeader({ status, config, onStart, disabled }: CouncilHead
       <form onSubmit={handleSubmit} className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto]">
         <div className="flex flex-col gap-2">
           <label htmlFor="motion" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Debate Motion
+            Decision Motion
           </label>
           <textarea
             id="motion"
@@ -77,8 +77,8 @@ export function CouncilHeader({ status, config, onStart, disabled }: CouncilHead
             onChange={(e) => setMotion(e.target.value)}
             rows={2}
             disabled={disabled}
-            placeholder="Enter the motion the council should deliberate..."
-            className="w-full resize-none rounded-xl border border-input bg-[oklch(0.18_0.04_274_/_0.55)] px-3.5 py-2.5 text-sm leading-relaxed outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/40 disabled:opacity-60"
+            placeholder="Enter the motion for council deliberation..."
+            className="w-full resize-none rounded-xl border-2 border-primary/30 bg-white px-4 py-3 text-sm leading-relaxed outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
           />
         </div>
 
@@ -117,8 +117,8 @@ export function CouncilHeader({ status, config, onStart, disabled }: CouncilHead
             disabled={disabled}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-4px_var(--primary)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Radio className="size-4" />
-            {disabled ? "Session in progress..." : "Start Debate Session"}
+            <Play className="size-4 fill-current" />
+            {disabled ? "Session in progress..." : "Begin Council Deliberation"}
           </button>
         </div>
       </form>
@@ -156,7 +156,7 @@ function ParamInput({
         step={step}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded-lg border border-input bg-[oklch(0.18_0.04_274_/_0.55)] px-2.5 py-2 font-mono text-sm tabular-nums outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/40 disabled:opacity-60"
+        className="w-full rounded-xl border-2 border-primary/30 bg-white px-2.5 py-2 font-mono text-sm tabular-nums outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
       />
     </div>
   )

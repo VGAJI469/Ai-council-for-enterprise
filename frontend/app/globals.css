@@ -44,9 +44,14 @@
   --color-agent-legal: var(--agent-legal);
   --color-agent-cmo: var(--agent-cmo);
   --color-agent-pr: var(--agent-pr);
+  --color-decision-approve: var(--decision-approve);
+  --color-decision-reject: var(--decision-reject);
+  --color-decision-conditional: var(--decision-conditional);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-heading: 'DM Sans', 'DM Sans Fallback';
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
@@ -54,46 +59,51 @@
 }
 
 :root {
-  /* Deep indigo glassmorphic theme */
-  --background: oklch(0.16 0.045 274);
-  --foreground: oklch(0.96 0.012 270);
-  --card: oklch(0.22 0.04 274 / 55%);
-  --card-foreground: oklch(0.96 0.012 270);
-  --popover: oklch(0.2 0.045 274);
-  --popover-foreground: oklch(0.96 0.012 270);
-  --primary: oklch(0.68 0.19 285);
-  --primary-foreground: oklch(0.16 0.045 274);
-  --secondary: oklch(0.28 0.05 274 / 60%);
-  --secondary-foreground: oklch(0.96 0.012 270);
-  --muted: oklch(0.26 0.04 274 / 50%);
-  --muted-foreground: oklch(0.72 0.03 275);
-  --accent: oklch(0.7 0.17 200);
-  --accent-foreground: oklch(0.16 0.045 274);
-  --destructive: oklch(0.64 0.23 22);
-  --border: oklch(0.7 0.08 280 / 16%);
-  --input: oklch(0.7 0.08 280 / 18%);
-  --ring: oklch(0.68 0.19 285);
-  --chart-1: oklch(0.64 0.23 22);
-  --chart-2: oklch(0.72 0.18 150);
-  --chart-3: oklch(0.66 0.17 250);
-  --chart-4: oklch(0.82 0.16 95);
-  --chart-5: oklch(0.72 0.2 350);
-  --radius: 0.9rem;
-  --sidebar: oklch(0.2 0.045 274 / 55%);
-  --sidebar-foreground: oklch(0.96 0.012 270);
-  --sidebar-primary: oklch(0.68 0.19 285);
-  --sidebar-primary-foreground: oklch(0.16 0.045 274);
-  --sidebar-accent: oklch(0.28 0.05 274 / 60%);
-  --sidebar-accent-foreground: oklch(0.96 0.012 270);
-  --sidebar-border: oklch(0.7 0.08 280 / 16%);
-  --sidebar-ring: oklch(0.68 0.19 285);
+  /* Burnt sienna professional warm palette */
+  --background: #f9f6f2;
+  --foreground: #3d2817;
+  --card: #fefdfb;
+  --card-foreground: #3d2817;
+  --popover: #fefdfb;
+  --popover-foreground: #3d2817;
+  --primary: #a0522d;
+  --primary-foreground: #fefdfb;
+  --secondary: #f5f5dc;
+  --secondary-foreground: #5d4037;
+  --muted: #e8dcc8;
+  --muted-foreground: #6d4c41;
+  --accent: #e35336;
+  --accent-foreground: #fefdfb;
+  --destructive: #c62828;
+  --border: #dcc9b6;
+  --input: #f5f5dc;
+  --ring: #a0522d;
+  --chart-1: #e35336;
+  --chart-2: #a0522d;
+  --chart-3: #f4a460;
+  --chart-4: #d2b48c;
+  --chart-5: #bc8f8f;
+  --radius: 0.75rem;
+  --sidebar: #fefdfb;
+  --sidebar-foreground: #3d2817;
+  --sidebar-primary: #a0522d;
+  --sidebar-primary-foreground: #fefdfb;
+  --sidebar-accent: #f5f5dc;
+  --sidebar-accent-foreground: #5d4037;
+  --sidebar-border: #dcc9b6;
+  --sidebar-ring: #a0522d;
 
-  /* Agent accent colors */
-  --agent-ceo: oklch(0.64 0.23 22);
-  --agent-cfo: oklch(0.72 0.18 150);
-  --agent-legal: oklch(0.66 0.18 250);
-  --agent-cmo: oklch(0.82 0.16 95);
-  --agent-pr: oklch(0.72 0.2 350);
+  /* Executive department accent colors */
+  --agent-ceo: #e35336;
+  --agent-cfo: #a0522d;
+  --agent-legal: #8b7355;
+  --agent-cmo: #f4a460;
+  --agent-pr: #cd853f;
+
+  /* Decision semantic colors matching the warm professional sienna theme */
+  --decision-approve: #4e8a64;
+  --decision-reject: #c62828;
+  --decision-conditional: #e69138;
 }
 
 .dark {
@@ -139,17 +149,17 @@
     background-image:
       radial-gradient(
         ellipse 80% 60% at 15% 0%,
-        oklch(0.55 0.22 285 / 0.18),
+        rgba(227, 83, 54, 0.06),
         transparent 60%
       ),
       radial-gradient(
         ellipse 70% 60% at 95% 10%,
-        oklch(0.6 0.18 200 / 0.14),
+        rgba(160, 82, 45, 0.05),
         transparent 55%
       ),
       radial-gradient(
         ellipse 90% 70% at 50% 110%,
-        oklch(0.6 0.2 350 / 0.1),
+        rgba(244, 164, 96, 0.04),
         transparent 60%
       );
     background-attachment: fixed;
@@ -160,10 +170,11 @@
 }
 
 @utility glass {
-  background: oklch(0.24 0.04 274 / 0.45);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid oklch(0.7 0.08 280 / 0.14);
+  background: rgba(254, 253, 251, 0.85);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid #dcc9b6;
+  box-shadow: 0 4px 6px rgba(61, 40, 23, 0.04);
 }
 
 @keyframes pulse-dot {

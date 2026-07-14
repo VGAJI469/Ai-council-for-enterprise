@@ -28,7 +28,7 @@ export function ConsensusPanel({ outcome, open, onClose }: ConsensusPanelProps) 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-[oklch(0.12_0.04_274_/_0.7)] backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-[rgba(61,40,23,0.3)] backdrop-blur-sm"
           />
           <motion.aside
             key="panel"
@@ -61,7 +61,7 @@ function ConsensusContent({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Award className="size-5 text-primary" />
-          <h2 className="text-base font-semibold tracking-tight">Consensus &amp; Outcome</h2>
+          <h2 className="text-base font-semibold tracking-tight">Decision Outcome</h2>
         </div>
         <button
           type="button"
@@ -88,7 +88,7 @@ function ConsensusContent({
         </p>
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-border bg-[oklch(0.18_0.04_274_/_0.5)] p-4">
+      <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-border bg-[rgba(245,245,220,0.4)] p-4">
         <CircularGauge
           value={outcome.councilConfidence}
           size={104}
@@ -114,7 +114,7 @@ function ConsensusContent({
 
       <div className="mt-6">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          CEO Closing Action Plan
+          Executive Action Plan
         </h3>
         <ol className="mt-3 flex flex-col gap-2.5">
           {outcome.actionPlan.map((item, i) => {
@@ -122,7 +122,7 @@ function ConsensusContent({
             return (
               <li
                 key={i}
-                className="flex gap-3 rounded-xl border border-border bg-[oklch(0.18_0.04_274_/_0.5)] p-3"
+                className="flex gap-3 rounded-xl border border-border bg-[rgba(245,245,220,0.3)] p-3"
               >
                 <span
                   className="flex size-6 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold"
@@ -147,7 +147,7 @@ function ConsensusContent({
         </ol>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-border bg-[oklch(0.18_0.04_274_/_0.5)] p-4">
+      <div className="mt-6 rounded-2xl border border-border bg-[rgba(245,245,220,0.3)] p-4">
         <div className="mb-2 flex items-center gap-2">
           <CheckCircle2 className="size-4 text-primary" />
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

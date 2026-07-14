@@ -18,7 +18,7 @@ import { OversightPanel } from "@/components/oversight-panel"
 import { ConsensusPanel } from "@/components/consensus-panel"
 
 const INITIAL_CONFIG: DebateConfig = {
-  motion: "Approve a $4.2M growth-capital facility for the enterprise expansion plan.",
+  motion: "Approve a $4.2M capital facility for the enterprise expansion plan.",
   dti: 38,
   creditScore: 712,
   defaultProbability: 6.5,
@@ -138,8 +138,13 @@ export default function Page() {
     }
   }, [])
 
-  const resetOversight = useCallback(() => {
-    setOversight(INITIAL_OVERSIGHT)
+  const resetOversight = useCallback(async () => {
+    try {
+      await fetch("/api/ceo/reset-supervision", { method: "POST" })
+      setOversight(INITIAL_OVERSIGHT)
+    } catch (err) {
+      console.error("Error resetting oversight:", err)
+    }
   }, [])
 
   return (

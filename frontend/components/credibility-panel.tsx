@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Gauge } from "lucide-react"
+import { BarChart3 } from "lucide-react"
 import { AGENTS, agentColor, type CredibilityScore } from "@/lib/council"
 import { ProgressMeter } from "@/components/progress-meter"
 
@@ -9,8 +9,8 @@ export function CredibilityPanel({ scores }: { scores: CredibilityScore[] }) {
   return (
     <section className="glass rounded-2xl p-5">
       <div className="mb-4 flex items-center gap-2">
-        <Gauge className="size-4 text-primary" />
-        <h2 className="text-sm font-semibold tracking-tight">Agent Credibility</h2>
+        <BarChart3 className="size-4 text-primary" />
+        <h2 className="text-sm font-semibold tracking-tight">Executive Credibility</h2>
       </div>
       <ul className="flex flex-col gap-3.5">
         {scores.map((s) => {

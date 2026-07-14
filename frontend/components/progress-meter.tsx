@@ -14,7 +14,7 @@ export function ProgressMeter({
   const v = Math.max(0, Math.min(100, value))
   return (
     <div
-      className={`w-full overflow-hidden rounded-full bg-[oklch(0.7_0.08_280_/_0.14)] ${className ?? ""}`}
+      className={`w-full overflow-hidden rounded-full bg-[rgba(220,201,182,0.35)] ${className ?? ""}`}
       style={{ height }}
       role="progressbar"
       aria-valuenow={Math.round(v)}

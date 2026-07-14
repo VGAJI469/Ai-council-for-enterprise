@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Terminal } from "lucide-react"
+import { MessageCircle } from "lucide-react"
 import { AGENTS, agentColor, type DebateMessage } from "@/lib/council"
 import { PredictionBadges } from "@/components/prediction-badges"
 
@@ -53,7 +53,7 @@ function MessageBubble({ message }: { message: DebateMessage }) {
           </span>
         </div>
         <div
-          className="mt-1.5 rounded-xl rounded-tl-sm border border-border bg-[oklch(0.21_0.04_274_/_0.55)] px-3.5 py-2.5"
+          className="mt-1.5 rounded-xl rounded-tl-sm border border-border bg-[rgba(245,245,220,0.5)] px-3.5 py-2.5"
           style={{ borderLeft: `2px solid ${color}` }}
         >
           <p className="text-pretty text-sm leading-relaxed text-foreground/90">{message.text}</p>
@@ -79,7 +79,7 @@ export function DebateBoard({ messages, status }: DebateBoardProps) {
   return (
     <section className="glass flex min-h-0 flex-col rounded-2xl">
       <div className="flex items-center gap-2 border-b border-border px-5 py-3.5">
-        <Terminal className="size-4 text-primary" />
+        <MessageCircle className="size-4 text-primary" />
         <h2 className="text-sm font-semibold tracking-tight">Live Debate Board</h2>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
           {messages.length} statement{messages.length === 1 ? "" : "s"}
@@ -90,7 +90,7 @@ export function DebateBoard({ messages, status }: DebateBoardProps) {
         {messages.length === 0 ? (
           <div className="flex h-full min-h-64 flex-col items-center justify-center text-center">
             <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
-              <Terminal className="size-7" />
+              <MessageCircle className="size-7" />
             </div>
             <p className="mt-4 text-sm font-medium">
               {status === "live" ? "Convening the council..." : "No active session"}

@@ -9,7 +9,7 @@ function DecisionIcon({ decision }: { decision: Decision }) {
 
 function MiniBar({ value, color }: { value: number; color: string }) {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[oklch(0.7_0.08_280_/_0.14)]">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[rgba(220,201,182,0.3)]">
       <div
         className="h-full rounded-full"
         style={{ width: `${value}%`, background: color, transition: "width 0.6s ease" }}
@@ -21,7 +21,7 @@ function MiniBar({ value, color }: { value: number; color: string }) {
 export function PredictionBadges({ prediction }: { prediction: AgentPrediction }) {
   const color = decisionColor(prediction.decision)
   return (
-    <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg border border-border bg-[oklch(0.18_0.04_274_/_0.5)] p-2.5">
+    <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg border border-border bg-[rgba(210,180,140,0.5)] p-2.5">
       <div className="flex flex-col gap-1">
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
           Risk

@@ -16,7 +16,7 @@ export function CircularGauge({
   size = 120,
   strokeWidth = 10,
   color = "var(--primary)",
-  trackColor = "oklch(0.7 0.08 280 / 0.16)",
+  trackColor = "rgba(220, 201, 182, 0.35)",
   label,
   sublabel,
   className,
