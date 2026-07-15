@@ -176,16 +176,18 @@ export default function Page() {
   }, [])
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-[1400px] flex-col gap-5 p-4 md:p-6 lg:h-screen">
+    <main className="mx-auto flex min-h-screen max-w-[1400px] flex-col gap-5 p-4 md:p-6 md:h-screen">
       <CouncilHeader
         status={status}
         config={config}
         onStart={startDebate}
         disabled={status === "live"}
+        outcome={outcome}
+        onViewOutcome={() => setShowOutcome(true)}
       />
 
-      <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[1fr_340px]">
-        <div className="flex min-h-[60vh] flex-col lg:min-h-0">
+      <div className="grid min-h-0 flex-1 gap-5 md:grid-cols-[1fr_320px]">
+        <div className="flex min-h-[60vh] flex-col md:min-h-0">
           <DebateBoard messages={messages} status={status} />
         </div>
 

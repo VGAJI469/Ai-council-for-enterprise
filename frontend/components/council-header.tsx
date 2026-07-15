@@ -1,17 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { Building2, Play, Circle } from "lucide-react"
-import type { DebateConfig } from "@/lib/council"
+import { Award, Building2, Play, Circle } from "lucide-react"
+import type { DebateConfig, ConsensusOutcome } from "@/lib/council"
 
 interface CouncilHeaderProps {
   status: "idle" | "live"
   config: DebateConfig
   onStart: (config: DebateConfig) => void
   disabled: boolean
+  outcome: ConsensusOutcome | null
+  onViewOutcome: () => void
 }
 
-export function CouncilHeader({ status, config, onStart, disabled }: CouncilHeaderProps) {
+export function CouncilHeader({ status, config, onStart, disabled, outcome, onViewOutcome }: CouncilHeaderProps) {
   const [motion, setMotion] = useState(config.motion)
   const [dti, setDti] = useState(config.dti)
   const [creditScore, setCreditScore] = useState(config.creditScore)
@@ -112,14 +114,26 @@ export function CouncilHeader({ status, config, onStart, disabled }: CouncilHead
               disabled={disabled}
             />
           </div>
-          <button
-            type="submit"
-            disabled={disabled}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-4px_var(--primary)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Play className="size-4 fill-current" />
-            {disabled ? "Session in progress..." : "Begin Council Deliberation"}
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="submit"
+              disabled={disabled}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_-4px_var(--primary)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Play className="size-4 fill-current" />
+              {disabled ? "Session in progress..." : "Begin Council Deliberation"}
+            </button>
+            {outcome && !disabled && (
+              <button
+                type="button"
+                onClick={onViewOutcome}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-[0_0_24px_-4px_var(--accent)] transition hover:brightness-110"
+              >
+                <Award className="size-4 text-white animate-pulse" />
+                View Consensus Outcome
+              </button>
+            )}
+          </div>
         </div>
       </form>
     </header>
