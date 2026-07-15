@@ -3,7 +3,7 @@ agents:
     agent_id: ceo_v1
     focus: strategic_growth
     generation: 1
-    initial_credibility: 0.7482039999999999
+    initial_credibility: 0.4253216599999998
     name: CEO Agent
     recently_evolved: false
     risk_threshold: 0.55
@@ -16,7 +16,7 @@ agents:
     agent_id: cfo_v1
     focus: financial_stability
     generation: 1
-    initial_credibility: 0.6486029999999999
+    initial_credibility: 0.37611966999999996
     name: CFO Agent
     recently_evolved: false
     risk_threshold: 0.35
@@ -29,7 +29,7 @@ agents:
     agent_id: legal_v1
     focus: regulatory_compliance
     generation: 1
-    initial_credibility: 0.7874999999999999
+    initial_credibility: 0.4798049999999998
     name: Legal Agent
     recently_evolved: false
     risk_threshold: 0.3
@@ -42,7 +42,7 @@ agents:
     agent_id: marketing_v1
     focus: market_expansion
     generation: 1
-    initial_credibility: 0.7874999999999999
+    initial_credibility: 0.6409569999999999
     name: Marketing Agent
     recently_evolved: false
     risk_threshold: 0.6
@@ -55,7 +55,7 @@ agents:
     agent_id: pr_v1
     focus: reputation_risk
     generation: 1
-    initial_credibility: 0.7874999999999999
+    initial_credibility: 0.4768279999999998
     name: PR Agent
     recently_evolved: false
     risk_threshold: 0.45

@@ -86,10 +86,38 @@ export default function Page() {
   useEffect(() => {
     fetchCredibility()
     fetchOversight()
+    try {
+      const savedMessages = localStorage.getItem("debate_messages")
+      if (savedMessages) {
+        setMessages(JSON.parse(savedMessages))
+      }
+      const savedOutcome = localStorage.getItem("debate_outcome")
+      if (savedOutcome) {
+        setOutcome(JSON.parse(savedOutcome))
+      }
+    } catch (err) {
+      console.error("Error loading persisted state:", err)
+    }
   }, [fetchCredibility, fetchOversight])
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("debate_messages", JSON.stringify(messages))
+    }
+  }, [messages])
+
+  useEffect(() => {
+    if (outcome) {
+      localStorage.setItem("debate_outcome", JSON.stringify(outcome))
+    }
+  }, [outcome])
 
   const startDebate = useCallback((cfg: DebateConfig) => {
     esRef.current?.close()
+    try {
+      localStorage.removeItem("debate_messages")
+      localStorage.removeItem("debate_outcome")
+    } catch (e) {}
     setConfig(cfg)
     setMessages([])
     setOutcome(null)
@@ -162,18 +190,18 @@ export default function Page() {
         </div>
 
         <aside className="flex flex-col gap-5 overflow-y-auto">
-          <CredibilityPanel scores={credibility} />
-          <OversightPanel state={oversight} onReset={resetOversight} disabled={status === "live"} />
           {outcome ? (
             <button
               type="button"
               onClick={() => setShowOutcome(true)}
-              className="glass inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-primary ring-1 ring-primary/30 transition hover:bg-primary/10"
+              className="glass inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-primary ring-1 ring-primary/30 transition hover:bg-primary/10 w-full shrink-0"
             >
-              <Award className="size-4" />
+              <Award className="size-4 animate-pulse text-accent" />
               View Consensus Outcome
             </button>
           ) : null}
+          <CredibilityPanel scores={credibility} />
+          <OversightPanel state={oversight} onReset={resetOversight} disabled={status === "live"} />
         </aside>
       </div>
 
