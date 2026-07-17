@@ -1,6 +1,7 @@
 """Council REST API routes."""
 import uuid
 import yaml
+import asyncio
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -192,11 +193,14 @@ async def run_council(req: CaseRequest):
             "payback_period_years":  3,
         }
 
-        predictions = []
         audit.record_event("session_request", {"case": req.case})
-        for agent in agents:
-            pred = agent.predict(context.copy())
-            predictions.append(pred)
+
+        # Run synchronous blocking agent predictions concurrently in separate threads
+        # to prevent blocking the main FastAPI event loop
+        tasks = [asyncio.to_thread(agent.predict, context.copy()) for agent in agents]
+        predictions = await asyncio.gather(*tasks)
+
+        for pred in predictions:
             try:
                 audit.record_event("agent_prediction", {"agent": pred.agent_role, "decision": pred.decision, "risk_score": pred.risk_score, "confidence": pred.confidence})
             except Exception:
