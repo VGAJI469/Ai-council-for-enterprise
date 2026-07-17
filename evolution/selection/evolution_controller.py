@@ -224,7 +224,7 @@ class EvolutionController:
         # If the CEO happens to have the lowest credibility score, it must not
         # be removed here — doing so creates a ghost-reference bug where
         # CEOSupervisionController continues mutating a retired agent object.
-        non_ceo_agents = [a for a in agents if a.role != "CEO"]
+        non_ceo_agents = [a for a in agents if a.role != "strategic_growth"]
 
         if not non_ceo_agents:
             # Edge case: council consists entirely of CEO agents — nothing to evolve.
