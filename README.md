@@ -614,8 +614,8 @@ adaptive-ai-council/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/ai-council.git
-cd ai-council
+git clone https://github.com/<repository-owner>/ai-enterprise-council.git
+cd ai-enterprise-council
 
 # 2. Install dependencies
 python -m pip install -r requirements.txt
