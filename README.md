@@ -790,3 +790,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 *Five agents enter. The best decision wins.*
 
 </div>
+
+## Code of Conduct
+
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
